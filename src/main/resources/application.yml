@@ -1,0 +1,6 @@
+firebase:
+  database:
+    url: undefined_for_now
+    labels:
+      accounts: "Accounts"
+      transactions: "Transactions"
