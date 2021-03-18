@@ -1,5 +1,6 @@
 package com.piggybank.repository;
 
+import com.piggybank.model.Account;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
@@ -27,8 +28,18 @@ public class AccountRepository extends PBRepository {
      *
      * @return Result of query.
      */
-    public String test() {
-        return "Success!";
+    public String test(String message) {
+        return "Success! Here is your message: " + message;
+    }
+
+    /**
+     * todo
+     * @param account
+     * @return
+     */
+    @NonNull
+    public String create(Account account) {
+        return "filler";
     }
 
     /**
