@@ -25,15 +25,12 @@ import static com.piggybank.model.Account.AccountType;
 public class AccountController extends PBController<AccountRepository> {
     private static final String BASE_URL = PiggyBankApplication.BASE_URL + "account/";
 
-    private final SessionAuthenticator authenticator;
-
     /**
      * Bean initializer constructor.
      * @param repository - Repository bean for the accounts.
      */
     public AccountController(AccountRepository repository, SessionAuthenticator authenticator) {
-        super(repository);
-        this.authenticator = authenticator;
+        super(repository, authenticator);
     }
 
     /**
@@ -47,12 +44,14 @@ public class AccountController extends PBController<AccountRepository> {
     @GetMapping(BASE_URL + "test")
     public ResponseEntity<String> test(
             @RequestBody String message,
-            @CookieValue(value = "session") String sessionCookie
+            @CookieValue(value = "session", required = false) String sessionCookie
     ) {
-        try {
-            authenticator.validateSession(sessionCookie);
-        } catch (FirebaseAuthException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
+        if (sessionCookie != null) {
+            try {
+                authenticator.validateSession(sessionCookie);
+            } catch (FirebaseAuthException e) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
+            }
         }
         return ResponseEntity.ok(repository.test(message));
     }
@@ -95,16 +94,12 @@ public class AccountController extends PBController<AccountRepository> {
 
     /**
      * todo
-     * @param userId
-     * @param password
      * @param token
      * @param response
      * @return
      */
     @PostMapping(BASE_URL + "log-in")
     public ResponseEntity<String> login(
-            @RequestParam String userId,
-            @RequestParam String password,
             @RequestParam String token,
             HttpServletResponse response
     ) {
@@ -116,7 +111,7 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
         }
-        return ResponseEntity.ok(repository.login(userId, password));
+        return ResponseEntity.ok("Login successful");
     }
 
     /**
@@ -133,8 +128,7 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         }
-        return ResponseEntity.ok("User successfully logged out of session");
+        return ResponseEntity.ok("Logout successful");
     }
-
 
 }
