@@ -5,7 +5,6 @@ import com.piggybank.PiggyBankApplication;
 import com.piggybank.model.Account;
 import com.piggybank.repository.AccountRepository;
 import com.piggybank.components.SessionAuthenticator;
-import com.piggybank.util.Request;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,14 +36,13 @@ public class AccountController extends PBController<AccountRepository> {
      * Test mapping.
      * Used to see if the account endpoints are reachable.
      *
-     * @param request Request information - contains message to send back as the response.
-     * @param sessionCookie Session cookie to validate the connection to the API.
+//     * @param request Request information - contains message to send back as the response.
+//     * @param sessionCookie Session cookie to validate the connection to the API.
      * @return Greeting message.
      */
     @GetMapping(BASE_URL + "test")
-    @ResponseBody
     public ResponseEntity<String> test(
-            @RequestBody Request<String> request,
+            @RequestBody String message,
             @CookieValue(value = "session") String sessionCookie
     ) {
         try {
@@ -52,49 +50,50 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         }
-        return ResponseEntity.ok(repository.test(request.getData()));
+        return ResponseEntity.ok(repository.test(message));
     }
 
     /**
      * todo
-     * @param request
+     * @param token
+     * @param newAccount
+     * @param response
      * @return
      */
     @PostMapping(BASE_URL + "create")
-    @ResponseBody
     public ResponseEntity<String> create(
-            @RequestBody Request<Account> request,
+            @RequestParam String token,
+            @RequestBody Account newAccount,
             HttpServletResponse response
     ) {
         try {
-            Cookie cookie = authenticator.generateNewSession(request.getToken());
+            Cookie cookie = authenticator.generateNewSession(token);
             response.addCookie(cookie);
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
         }
-        return ResponseEntity.ok(repository.create(request.getData()));
+        return ResponseEntity.ok(repository.create(newAccount));
     }
 
     /**
      * todo
      * @param username
      * @param password
-     * @param request
+     * @param token
      * @param response
      * @return
      */
     @PostMapping(BASE_URL + "log-in")
-    @ResponseBody
     public ResponseEntity<String> login(
             @RequestParam String username,
             @RequestParam String password,
-            @RequestBody Request<Void> request,
+            @RequestParam String token,
             HttpServletResponse response
     ) {
         try {
-            Cookie cookie = authenticator.generateNewSession(request.getToken());
+            Cookie cookie = authenticator.generateNewSession(token);
             response.addCookie(cookie);
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
