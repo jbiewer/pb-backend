@@ -38,7 +38,7 @@ public class AccountRepository extends PBRepository {
      * @return
      */
     @NonNull
-    public String create(Account account) {
+    public String create(Account newAccount) {
         return "filler";
     }
 

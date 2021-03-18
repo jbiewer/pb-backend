@@ -15,3 +15,13 @@
    to the location of the private key file.
    
 Ex.: `$ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/priv/key.json"`
+
+### Session management
+
+Firebase Auth is used to manage session cookies, and the implementations are based on the following tutorial:
+https://firebase.google.com/docs/auth/admin/manage-cookies
+
+Basically, there are three components of session management:
+1. Create a session upon log-in/account creation
+2. Validate an existing session for all incoming requests
+3. Clear and revoke a session cookie upon log-out.

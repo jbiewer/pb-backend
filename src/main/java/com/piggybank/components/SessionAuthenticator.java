@@ -27,6 +27,16 @@ public class SessionAuthenticator {
 
     /**
      * todo
+     * @param sessionCookie
+     * @throws FirebaseAuthException
+     */
+    public void clearSessionAndRevoke(@NonNull String sessionCookie) throws FirebaseAuthException {
+        FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookie(sessionCookie);
+        FirebaseAuth.getInstance().revokeRefreshTokens(decodedToken.getUid());
+    }
+
+    /**
+     * todo
      * @param token
      * @return
      * @throws FirebaseAuthException
@@ -34,6 +44,7 @@ public class SessionAuthenticator {
      */
     @NonNull
     public Cookie generateNewSession(@NonNull String token) throws FirebaseAuthException, AuthException {
+        // Verify Firebase token received.
         FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
         long authTimeMillis = TimeUnit.SECONDS.toMillis((long) decodedToken.getClaims().get("auth_time"));
         if (System.currentTimeMillis() - authTimeMillis >= TimeUnit.MINUTES.toMillis(5)) {

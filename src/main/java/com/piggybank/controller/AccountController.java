@@ -13,6 +13,10 @@ import javax.security.auth.message.AuthException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.Objects;
+
+import static com.piggybank.model.Account.AccountType;
+
 /**
  * Account-related application interface.
  * Base URL: /api/v1/account/
@@ -66,6 +70,7 @@ public class AccountController extends PBController<AccountRepository> {
             @RequestBody Account newAccount,
             HttpServletResponse response
     ) {
+        // Validate token and generate a new session.
         try {
             Cookie cookie = authenticator.generateNewSession(token);
             response.addCookie(cookie);
@@ -74,12 +79,23 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
         }
-        return ResponseEntity.ok(repository.create(newAccount));
+
+        // Attempt to create a new account.
+        switch (newAccount.getType()) {
+            case MERCHANT:
+                if (newAccount.getBankAccount() == null) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Merchant account requires bank account.");
+                }
+            case CUSTOMER:
+                return ResponseEntity.ok(repository.create(newAccount));
+            default:
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Account type must be specified");
+        }
     }
 
     /**
      * todo
-     * @param username
+     * @param userId
      * @param password
      * @param token
      * @param response
@@ -87,7 +103,7 @@ public class AccountController extends PBController<AccountRepository> {
      */
     @PostMapping(BASE_URL + "log-in")
     public ResponseEntity<String> login(
-            @RequestParam String username,
+            @RequestParam String userId,
             @RequestParam String password,
             @RequestParam String token,
             HttpServletResponse response
@@ -100,6 +116,25 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
         }
-        return ResponseEntity.ok(repository.login(username, password));
+        return ResponseEntity.ok(repository.login(userId, password));
     }
+
+    /**
+     * todo
+     * @param sessionCookie
+     * @return
+     */
+    @PostMapping(BASE_URL + "log-out")
+    public ResponseEntity<String> logout(
+            @CookieValue(value = "session") String sessionCookie
+    ) {
+        try {
+            authenticator.clearSessionAndRevoke(sessionCookie);
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
+        }
+        return ResponseEntity.ok("User successfully logged out of session");
+    }
+
+
 }
