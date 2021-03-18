@@ -1,5 +1,6 @@
 package com.piggybank.util;
 
+@Deprecated
 public class Result<T> {
     private String errorType;
     private String errorMessage;

@@ -1,9 +1,7 @@
 package com.piggybank.repository;
 
-import com.google.cloud.firestore.CollectionReference;
-import com.google.firebase.cloud.FirestoreClient;
-import com.piggybank.util.Result;
 import org.springframework.core.env.Environment;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.Objects;
@@ -12,8 +10,7 @@ import java.util.Objects;
  * Interface for database interactions for accounts.
  */
 @Repository
-public class AccountRepository {
-    private final CollectionReference accountsRef;
+public class AccountRepository extends PBRepository {
 
     /**
      * Initializes the collection reference to the value at the specified property location
@@ -22,8 +19,7 @@ public class AccountRepository {
      * @param env Environment containing properties.
      */
     public AccountRepository(Environment env) {
-        String label = Objects.requireNonNull(env.getProperty("firebase.database.labels.accounts")); // todo
-        accountsRef = FirestoreClient.getFirestore().collection(label);
+        super(Objects.requireNonNull(env.getProperty("firebase.database.labels.accounts")));
     }
 
     /**
@@ -31,7 +27,18 @@ public class AccountRepository {
      *
      * @return Result of query.
      */
-    public Result<String> test() {
-        return new Result<>("Success!");
+    public String test() {
+        return "Success!";
+    }
+
+    /**
+     * todo
+     * @param username
+     * @param password
+     * @return
+     */
+    @NonNull
+    public String login(String username, String password) {
+        return "filler";
     }
 }
