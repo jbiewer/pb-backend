@@ -3,6 +3,7 @@ package com.piggybank.repository;
 import com.piggybank.model.Account;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Objects;
@@ -28,13 +29,14 @@ public class AccountRepository extends PBRepository {
      *
      * @return Result of query.
      */
+    @NonNull
     public String test(String message) {
         return "Success! Here is your message: " + message;
     }
 
     /**
      * todo
-     * @param account
+     * @param newAccount
      * @return
      */
     @NonNull
@@ -51,5 +53,16 @@ public class AccountRepository extends PBRepository {
     @NonNull
     public String login(String username, String password) {
         return "filler";
+    }
+
+    /**
+     * todo
+     * @param username
+     * @param content
+     * @return
+     */
+    @NonNull
+    public String update(String username, Account content) {
+        return "Account updated successfully!";
     }
 }

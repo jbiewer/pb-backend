@@ -53,6 +53,7 @@ public class AccountController extends PBController<AccountRepository> {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
             }
         }
+
         return ResponseEntity.ok(repository.test(message));
     }
 
@@ -111,6 +112,7 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
         }
+
         return ResponseEntity.ok("Login successful");
     }
 
@@ -128,7 +130,29 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         }
+
         return ResponseEntity.ok("Logout successful");
     }
 
+    /**
+     * todo
+     * @param username
+     * @param content
+     * @param sessionCookie
+     * @return
+     */
+    @PutMapping(BASE_URL + "update")
+    public ResponseEntity<String> update(
+            @RequestParam String username,
+            @RequestBody Account content,
+            @CookieValue(value = "session") String sessionCookie
+    ) {
+        try {
+            authenticator.validateSession(sessionCookie);
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
+        }
+
+        return ResponseEntity.ok(repository.update(username, content));
+    }
 }

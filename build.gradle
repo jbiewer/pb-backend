@@ -18,17 +18,12 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
     // Spring
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // Firebase
     implementation 'com.google.firebase:firebase-admin:7.1.0'
-
-    // https://mvnrepository.com/artifact/com.itextpdf/itextpdf
-    implementation group: 'com.itextpdf', name: 'itextpdf', version: '5.5.13.2'
-    // https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox
-    implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.22'
 }
 
 test {
