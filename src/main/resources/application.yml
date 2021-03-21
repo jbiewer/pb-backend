@@ -1,6 +1,7 @@
 firebase:
   database:
-    url: undefined_for_now
+    url: "https://piggybank-104d3-default-rtdb.firebaseio.com/"
     labels:
       accounts: "Accounts"
       transactions: "Transactions"
+  service-account-id: "firebase-adminsdk-892lf@piggybank-104d3.iam.gserviceaccount.com"
