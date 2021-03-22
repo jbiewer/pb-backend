@@ -31,6 +31,11 @@ public class Account {
     private final AccountType type;
     private List<String> transactionIds;
 
+    //default constructor needed for http requests
+    public Account(){ 
+        this.type = null;
+    }
+
     public Account(AccountType type) {
         this.type = type;
     }
