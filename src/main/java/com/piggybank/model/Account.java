@@ -6,6 +6,17 @@ import java.util.List;
  * todo
  */
 public class Account {
+    /**
+     * todo
+     * @param account
+     * @return
+     */
+    public static Account filterSensitiveData(Account account) {
+        account.setPassword(null);
+        account.setTransactionIds(null);
+        return account;
+    }
+
     public enum AccountType {
         CUSTOMER,
         MERCHANT
@@ -15,7 +26,7 @@ public class Account {
     private String password;
     private String email;
     private String profilePictureUrl;
-    private float balance;
+    private Float balance;
     private BankAccount bankAccount;
     private final AccountType type;
     private List<String> transactionIds;
@@ -56,11 +67,11 @@ public class Account {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public float getBalance() {
+    public Float getBalance() {
         return balance;
     }
 
-    public void setBalance(float balance) {
+    public void setBalance(Float balance) {
         this.balance = balance;
     }
 

@@ -74,22 +74,22 @@ public class AccountController extends PBController<AccountRepository> {
         try {
             Cookie cookie = authenticator.generateNewSession(token);
             response.addCookie(cookie);
+
+            // Attempt to create a new account.
+            switch (newAccount.getType()) {
+                case MERCHANT:
+                    Objects.requireNonNull(newAccount.getBankAccount(), "Merchant account requires bank account");
+                case CUSTOMER:
+                    return ResponseEntity.ok(repository.create(newAccount));
+                default:
+                    throw new IllegalArgumentException("Account type must be specified");
+            }
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
-        }
-
-        // Attempt to create a new account.
-        switch (newAccount.getType()) {
-            case MERCHANT:
-                if (newAccount.getBankAccount() == null) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Merchant account requires bank account.");
-                }
-            case CUSTOMER:
-                return ResponseEntity.ok(repository.create(newAccount));
-            default:
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Account type must be specified");
+        } catch (Throwable t) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
         }
     }
 
@@ -149,10 +149,12 @@ public class AccountController extends PBController<AccountRepository> {
     ) {
         try {
             authenticator.validateSession(sessionCookieId);
+            return ResponseEntity.ok(repository.update(username, content));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
+        } catch (Throwable t) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
         }
 
-        return ResponseEntity.ok(repository.update(username, content));
     }
 }
