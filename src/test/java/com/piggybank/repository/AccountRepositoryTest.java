@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 public class AccountRepositoryTest {
@@ -24,8 +23,8 @@ public class AccountRepositoryTest {
 
     @Test
     public void testCreateCustomer() {
-        Account account = new Account(Account.AccountType.CUSTOMER);
-        // account creation...
-        String result = repository.create(account);
+//        Account account = new Account(Account.AccountType.CUSTOMER);
+//         account creation...
+//        String result = repository.create(account);
     }
 }
