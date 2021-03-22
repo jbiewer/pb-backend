@@ -1,5 +1,6 @@
 package com.piggybank.controller;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.piggybank.PiggyBankApplication;
 import com.piggybank.model.Account;
@@ -15,7 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.util.Objects;
 
-import static com.piggybank.model.Account.AccountType;
 
 /**
  * Account-related application interface.
@@ -58,9 +58,27 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * todo
-     * @param token
-     * @param newAccount
+     * Type: POST
+     * Path: /api/v1/account/create
+     * Body: Customer object.
+     *
+     * Takes in an account serialized object and uploads it to the repository.
+     * If an account with the username already exists, an error will be returned in the result. If no account type
+     * is specified, and error will be returned as well.
+     *
+     * Example:
+     *   curl -X POST URL/api/v1/account/customer/create?token={token}
+     *        -H 'Content-Type:application/json'
+     *        -d '{
+     *              "username": "abcde",
+     *              "password": "kj3h6jh5kj6g54kk7hk6hj7",
+     *              "email": "email@email.com",
+     *              "type": "CUSTOMER",
+     *                  ...
+     *            }'
+     *
+     * @param token - Token created by firebase authentication system
+     * @param newAccount - Account object containing initial fields. Type field is required
      * @param response
      * @return
      */
