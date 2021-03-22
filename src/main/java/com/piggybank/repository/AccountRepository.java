@@ -12,6 +12,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -98,22 +99,25 @@ public class AccountRepository extends PBRepository {
                     transaction.create(newReference, snapshot.getData());
                     transaction.delete(oldReference);
                     currentReference = newReference;
-                    //*** test to see if this is needed to update username field of new document
-                    transaction.update(currentReference, "username", content.getUsername());
+                    //todo: test to see if this is needed to update username field of new document
+                    // * Java's reflection is used here to throw an exception if "uesrname" field isn't found.
+                    Field field = content.getClass().getDeclaredField("username");
+                    transaction.update(currentReference, field.getName(), field.get(content));
                 } else {
                     throw new Exception("Account with that username not found.");
                 }
             }
 
-            // Change other fields if requested.
             // Lambdas only allow logically-final fields.
             final DocumentReference currentRef = currentReference;
-            ifNonNull(content.getPassword()).then(password -> transaction.update(currentRef, "password", password));
-            ifNonNull(content.getEmail()).then(email -> transaction.update(currentRef, "email", email));
-            ifNonNull(content.getProfilePictureUrl()).then(url -> transaction.update(currentRef, "profilePictureUrl", url));
-            ifNonNull(content.getBalance()).then(balance -> transaction.update(currentRef, "balance", balance));
-            // requires testing
-            ifNonNull(content.getBankAccount()).then(bank -> transaction.update(currentRef, "bankAccount", bank));
+
+            // Change other fields if requested, except for transaction IDs.
+            content.setTransactionIds(null);
+            for (Field declaredField : content.getClass().getDeclaredFields()) {
+                ifNonNull(declaredField.get(content)).then(value ->
+                    transaction.update(currentRef, declaredField.getName(), value)
+                );
+            }
             return "Account successfully updated!";
         });
 
