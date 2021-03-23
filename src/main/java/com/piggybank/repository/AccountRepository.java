@@ -58,8 +58,15 @@ public class AccountRepository extends PBRepository {
      * @return
      */
     public String create(Account newAccount) throws Throwable {
-        if (newAccount.getType() == null) {
-            throw new IllegalArgumentException("Must specify account type.");
+        switch (newAccount.getType()) {
+            case MERCHANT:
+                if (newAccount.getBankAccount() == null) {
+                    throw new IllegalArgumentException("Merchant account must have a bank account.");
+                }
+            case CUSTOMER:
+                break;
+            default:
+                throw new IllegalArgumentException("Must specify account type.");
         }
 
         try {

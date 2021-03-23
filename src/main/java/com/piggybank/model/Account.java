@@ -25,12 +25,13 @@ public class Account {
     private String username;
     private String password;
     private String email;
+    private AccountType type;
     private String profilePictureUrl;
     private Float balance;
     private BankAccount bankAccount;
-    private AccountType type;
     private List<String> transactionIds;
 
+    // Default constructor needed for http requests.
     public Account() {}
 
     public Account(AccountType type) {
@@ -61,6 +62,14 @@ public class Account {
         this.email = email;
     }
 
+    public AccountType getType() {
+        return type;
+    }
+
+    public void setType(AccountType type) {
+        this.type = type;
+    }
+
     public String getProfilePictureUrl() {
         return profilePictureUrl;
     }
@@ -83,10 +92,6 @@ public class Account {
 
     public void setBankAccount(BankAccount bankAccount) {
         this.bankAccount = bankAccount;
-    }
-
-    public AccountType getType() {
-        return type;
     }
 
     public List<String> getTransactionIds() {
