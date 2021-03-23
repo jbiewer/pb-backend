@@ -1,3 +1,4 @@
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 plugins {
@@ -39,25 +40,36 @@ dependencies {
  * Begins the firebase emulators which consists of the firestore emulator, auth emulator, etc.
  * The emulators are stored in the 'emulators' directory of this project.
  */
-task startFirebaseEmulators {
-//    ext.process = new ProcessBuilder()
-//            .inheritIO()
-//            .command("firebase", "emulators:start")
-//            .start()
-//            .waitFor()
+task startFirebaseEmulators(type: Task) {
+    doFirst {
+        Process emulatorProcess = new ProcessBuilder()
+                .directory(file("$projectDir/emulators"))
+                .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                .command("firebase", "emulators:start")
+                .start()
+        while (emulatorProcess.in.read() == 0) {
+        }
+        println "Firebase emulator started"
+    }
 }
 
-task stopFirebaseEmulators {
-//    new ProcessBuilder("emulators/stop-emulators.sh").start().waitFor()
+task stopFirebaseEmulators(type: Task) {
+    doLast {
+        Process pidFinderProcess = new ProcessBuilder("lsof", "-t", "-i", ":9001").start()
+        String pid = new String(pidFinderProcess.in.readAllBytes(), StandardCharsets.UTF_8).trim()
+        if ("kill ${pid}".execute().waitFor() == 0) {
+            println "Firebase emulator stopped"
+        } else {
+            println "No process of Firebase found"
+        }
+    }
 }
 
 test {
+    dependsOn startFirebaseEmulators
+    finalizedBy stopFirebaseEmulators
     useJUnitPlatform()
-    dependsOn(startFirebaseEmulators)
-
-    environment("GCLOUD_PROJECT", "piggybank-104d3")
-    environment("FIRESTORE_EMULATOR_HOST", "localhost:9001")
-    environment("GOOGLE_APPLICATION_CREDENTIALS", "secret/pb-backend-pk.json")
-
-    finalizedBy(stopFirebaseEmulators)
+    environment "GCLOUD_PROJECT", "piggybank-104d3"
+    environment "FIRESTORE_EMULATOR_HOST", "localhost:9001"
+    environment "GOOGLE_APPLICATION_CREDENTIALS", "secret/pb-backend-pk.json"
 }
