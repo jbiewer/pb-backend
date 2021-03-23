@@ -105,14 +105,13 @@ public class AccountRepository extends PBRepository {
                 }
             }
 
-            // Change other fields if requested.
-            // Lambdas only allow logically-final fields.
-            final DocumentReference currentRef = currentReference;
+            // Change other fields if requested (lambdas must use effectively final fields).
+            DocumentReference currentRef = currentReference;
             ifNonNull(content.getPassword()).then(password -> transaction.update(currentRef, "password", password));
             ifNonNull(content.getEmail()).then(email -> transaction.update(currentRef, "email", email));
             ifNonNull(content.getProfilePictureUrl()).then(url -> transaction.update(currentRef, "profilePictureUrl", url));
             ifNonNull(content.getBalance()).then(balance -> transaction.update(currentRef, "balance", balance));
-            // requires testing
+            // todo: requires testing
             ifNonNull(content.getBankAccount()).then(bank -> transaction.update(currentRef, "bankAccount", bank));
             return "Account successfully updated!";
         });

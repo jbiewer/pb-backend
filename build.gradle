@@ -20,10 +20,14 @@ dependencies {
 
     // Firebase
     implementation 'com.google.firebase:firebase-admin:7.1.0'
+    implementation 'com.google.cloud:google-cloud-firestore:2.1.0'
 }
 
 test {
     useJUnitPlatform()
+    environment "GCLOUD_PROJECT", "piggybank-104d3"
+    environment "FIRESTORE_EMULATOR_HOST", "localhost:9001"
+    environment "GOOGLE_APPLICATION_CREDENTIALS", "/home/biewers2/school/engineering/secret/pb-backend-pk.json"
 }
 
 // Idk how this works yet :(

@@ -92,16 +92,7 @@ public class AccountController extends PBController<AccountRepository> {
         try {
             Cookie cookie = authenticator.generateNewSession(token);
             response.addCookie(cookie);
-
-            // Attempt to create a new account.
-            switch (newAccount.getType()) {
-                case MERCHANT:
-                    Objects.requireNonNull(newAccount.getBankAccount(), "Merchant account requires bank account");
-                case CUSTOMER:
-                    return ResponseEntity.ok(repository.create(newAccount));
-                default:
-                    throw new IllegalArgumentException("Account type must be specified");
-            }
+            return ResponseEntity.ok(repository.create(newAccount));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
