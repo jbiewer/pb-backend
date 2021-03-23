@@ -1,11 +1,10 @@
 package com.piggybank.controller;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.piggybank.PiggyBankApplication;
+import com.piggybank.components.SessionAuthenticator;
 import com.piggybank.model.Account;
 import com.piggybank.repository.AccountRepository;
-import com.piggybank.components.SessionAuthenticator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.security.auth.message.AuthException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-
-import java.util.Objects;
 
 
 /**
@@ -37,12 +34,12 @@ public class AccountController extends PBController<AccountRepository> {
      * Test mapping.
      * Used to see if the account endpoints are reachable.
      *
-//     * @param request Request information - contains message to send back as the response.
-//     * @param sessionCookieId Session cookie to validate the connection to the API.
+     * @param message Request information - contains message to send back as the response.
+     * @param sessionCookieId Session cookie to validate the connection to the API.
      * @return Greeting message.
      */
     @GetMapping(BASE_URL + "test")
-    public ResponseEntity<String> test(
+    public ResponseEntity<?> test(
             @RequestBody String message,
             @CookieValue(value = "session", required = false) String sessionCookieId
     ) {
@@ -83,7 +80,7 @@ public class AccountController extends PBController<AccountRepository> {
      * @return
      */
     @PostMapping(BASE_URL + "create")
-    public ResponseEntity<String> create(
+    public ResponseEntity<?> create(
             @RequestParam String token,
             @RequestBody Account newAccount,
             HttpServletResponse response
@@ -109,7 +106,7 @@ public class AccountController extends PBController<AccountRepository> {
      * @return
      */
     @PostMapping(BASE_URL + "log-in")
-    public ResponseEntity<String> login(
+    public ResponseEntity<?> login(
             @RequestParam String token,
             HttpServletResponse response
     ) {
@@ -131,7 +128,7 @@ public class AccountController extends PBController<AccountRepository> {
      * @return
      */
     @PostMapping(BASE_URL + "log-out")
-    public ResponseEntity<String> logout(
+    public ResponseEntity<?> logout(
             @CookieValue(value = "session") String sessionCookieId
     ) {
         try {
@@ -151,7 +148,7 @@ public class AccountController extends PBController<AccountRepository> {
      * @return
      */
     @PutMapping(BASE_URL + "update")
-    public ResponseEntity<String> update(
+    public ResponseEntity<?> update(
             @RequestParam String username,
             @RequestBody Account content,
             @CookieValue(value = "session") String sessionCookieId
@@ -164,6 +161,26 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (Throwable t) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
         }
+    }
 
+    /**
+     * todo
+     * @param username
+     * @param sessionCookieId
+     * @return
+     */
+    @GetMapping(BASE_URL + "get")
+    public ResponseEntity<?> get(
+            @RequestParam String username,
+            @CookieValue(value = "session") String sessionCookieId
+    ) {
+        try {
+            authenticator.validateSession(sessionCookieId);
+            return ResponseEntity.ok(repository.get(username));
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
+        } catch (Throwable t) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+        }
     }
 }
