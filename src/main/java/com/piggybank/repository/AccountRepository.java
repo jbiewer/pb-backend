@@ -5,6 +5,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
+import com.piggybank.util.Util;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
@@ -40,18 +41,6 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * todo
-     * @param username
-     * @param password
-     * @return
-     */
-    @NonNull
-    public String login(String username, String password) {
-        // todo
-        return "filler";
-    }
-
-    /**
      * Creates new account if one not found with same username. 
      * Fields set according to Account object parameter
      * 
@@ -74,7 +63,9 @@ public class AccountRepository extends PBRepository {
             collection.document(newAccount.getUsername()).create(newAccount).get();
             return "Account created successfully!";
         } catch (ExecutionException | InterruptedException e) {
-            throw e.getCause();
+            // todo log
+            e.printStackTrace();
+            throw new Exception("Internal server error");
         }
     }
 
@@ -119,7 +110,7 @@ public class AccountRepository extends PBRepository {
             // Change other fields if requested, except for transaction IDs.
             content.setTransactionIds(null);
             for (Field declaredField : content.getClass().getDeclaredFields()) {
-                ifNonNull(declaredField.get(content)).then(value ->
+                Util.ifNonNull(declaredField.get(content)).then(value ->
                     transaction.update(currentRef, declaredField.getName(), value)
                 );
             }

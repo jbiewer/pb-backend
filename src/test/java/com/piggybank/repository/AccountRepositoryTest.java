@@ -1,20 +1,17 @@
 package com.piggybank.repository;
 
-import com.google.cloud.firestore.Firestore;
 import com.piggybank.model.Account;
 import com.piggybank.model.Customer;
-import com.piggybank.util.FirebaseService;
+import com.piggybank.model.Merchant;
+import com.piggybank.util.FirebaseEmulatorService;
 import com.piggybank.util.MockModels;
-import net.bytebuddy.implementation.bytecode.Throw;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 @SpringBootTest
 public class AccountRepositoryTest {
@@ -24,29 +21,44 @@ public class AccountRepositoryTest {
 
     @AfterEach
     public void afterEach() throws IOException, InterruptedException {
-        FirebaseService.clearFirestoreDocuments();
+        FirebaseEmulatorService.clearFirestoreDocuments();
     }
 
     /**
      * todo
      */
     @Test
-    public void testTest() {
+    public void test() {
         String result = repository.test("test");
         Assertions.assertEquals(result, "Success! Here is your message: test");
     }
 
     /**
-     *
+     * todo
      */
     @Test
-    public void testCreateCustomer() {
-        try {
-            Customer customer = MockModels.mockCustomer();
-            // account creation...
-            repository.create(customer);
-        } catch (Throwable e) {
-            Assertions.fail(e);
-        }
+    public void createCustomer() throws Throwable {
+        Customer customer = MockModels.mockCustomer();
+        Assertions.assertNotNull(repository.create(customer));
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void createMerchant() throws Throwable {
+        Merchant merchant = MockModels.mockMerchant();
+        Assertions.assertNotNull(repository.create(merchant));
+    }
+
+    @Test
+    public void createMerchantWithoutBankAccount() throws Throwable {
+//        Merchant merchant = MockModels.mockMerchant();
+    }
+
+    @Test
+    public void createAccountWithoutType() throws Throwable {
+//        Account account = MockModels.mockAccount();
     }
 }
+

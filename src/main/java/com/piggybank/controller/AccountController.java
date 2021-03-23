@@ -43,15 +43,14 @@ public class AccountController extends PBController<AccountRepository> {
             @RequestBody String message,
             @CookieValue(value = "session", required = false) String sessionCookieId
     ) {
-        if (sessionCookieId != null) {
-            try {
+        try {
+            if (sessionCookieId != null) {
                 authenticator.validateSession(sessionCookieId);
-            } catch (FirebaseAuthException e) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
             }
+            return ResponseEntity.ok(repository.test(message));
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         }
-
-        return ResponseEntity.ok(repository.test(message));
     }
 
     /**
@@ -111,15 +110,13 @@ public class AccountController extends PBController<AccountRepository> {
             HttpServletResponse response
     ) {
         try {
-            Cookie cookie = authenticator.generateNewSession(token);
-            response.addCookie(cookie);
+            response.addCookie(authenticator.generateNewSession(token));
+            return ResponseEntity.ok("Login successful");
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
         }
-
-        return ResponseEntity.ok("Login successful");
     }
 
     /**
@@ -133,11 +130,11 @@ public class AccountController extends PBController<AccountRepository> {
     ) {
         try {
             authenticator.clearSessionAndRevoke(sessionCookieId);
+            return ResponseEntity.ok("Logout successful");
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         }
 
-        return ResponseEntity.ok("Logout successful");
     }
 
     /**

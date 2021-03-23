@@ -13,11 +13,27 @@ public abstract class MockModels {
     private static final Random rand = new Random();
 
     public static Customer mockCustomer() {
+        return mockCustomer(MockModelOptions.none());
+    }
+
+    public static Customer mockCustomer(MockModelOptions options) {
         return mockAccount(new Customer());
     }
 
     public static Merchant mockMerchant() {
+        return mockMerchant(MockModelOptions.none());
+    }
+
+    public static Merchant mockMerchant(MockModelOptions options) {
         return mockAccount(new Merchant());
+    }
+
+    public static Account mockAccount() {
+        return mockAccount(MockModelOptions.none());
+    }
+
+    public static Account mockAccount(MockModelOptions options) {
+        return mockAccount(new Account());
     }
 
     private static <T extends Account> T mockAccount(T account) {

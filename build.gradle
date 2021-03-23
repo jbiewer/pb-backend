@@ -47,8 +47,7 @@ task startFirebaseEmulators(type: Task) {
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .command("firebase", "emulators:start")
                 .start()
-        while (emulatorProcess.in.read() == 0) {
-        }
+        while (emulatorProcess.in.read() == 0) {}
         println "Firebase emulator started"
     }
 }
