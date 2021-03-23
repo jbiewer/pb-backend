@@ -1,3 +1,5 @@
+import java.util.concurrent.TimeUnit
+
 plugins {
     id 'org.springframework.boot' version '2.4.4'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
@@ -20,16 +22,42 @@ dependencies {
 
     // Firebase
     implementation 'com.google.firebase:firebase-admin:7.1.0'
+    implementation 'com.google.cloud:google-cloud-firestore:2.1.0'
+}
+
+/**
+ * I don't know how this works yet :(
+ */
+//javadoc {
+//    failOnError false
+//    source = sourceSets.main.allJava
+//    destinationDir = reporting.file("rest-api-docs")
+//    classpath = configurations.compile
+//}
+
+/**
+ * Begins the firebase emulators which consists of the firestore emulator, auth emulator, etc.
+ * The emulators are stored in the 'emulators' directory of this project.
+ */
+task startFirebaseEmulators {
+//    ext.process = new ProcessBuilder()
+//            .inheritIO()
+//            .command("firebase", "emulators:start")
+//            .start()
+//            .waitFor()
+}
+
+task stopFirebaseEmulators {
+//    new ProcessBuilder("emulators/stop-emulators.sh").start().waitFor()
 }
 
 test {
     useJUnitPlatform()
-}
+    dependsOn(startFirebaseEmulators)
 
-// Idk how this works yet :(
-javadoc {
-    failOnError false
-    source = sourceSets.main.allJava
-    destinationDir = reporting.file("rest-api-docs")
-    classpath = configurations.compile
+    environment("GCLOUD_PROJECT", "piggybank-104d3")
+    environment("FIRESTORE_EMULATOR_HOST", "localhost:9001")
+    environment("GOOGLE_APPLICATION_CREDENTIALS", "secret/pb-backend-pk.json")
+
+    finalizedBy(stopFirebaseEmulators)
 }
