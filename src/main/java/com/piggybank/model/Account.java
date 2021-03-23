@@ -28,8 +28,10 @@ public class Account {
     private String profilePictureUrl;
     private Float balance;
     private BankAccount bankAccount;
-    private final AccountType type;
+    private AccountType type;
     private List<String> transactionIds;
+
+    public Account() {}
 
     public Account(AccountType type) {
         this.type = type;

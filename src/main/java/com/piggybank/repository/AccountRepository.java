@@ -1,13 +1,10 @@
 package com.piggybank.repository;
 
-import com.piggybank.model.Account;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.firebase.cloud.FirestoreClient;
-import com.piggybank.model.Customer;
-import com.piggybank.model.Merchant; 
-import com.piggybank.model.Account.AccountType;
+import com.piggybank.model.Account;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;

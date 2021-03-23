@@ -8,6 +8,8 @@ public class BankAccount {
     private long routingNumber;
     private String nameOnAccount;
 
+    public BankAccount() {}
+
     public long getAccountNumber() {
         return accountNumber;
     }
