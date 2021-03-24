@@ -4,10 +4,12 @@ import com.piggybank.model.Account;
 import com.piggybank.model.Customer;
 import com.piggybank.model.Merchant;
 import com.piggybank.util.FirebaseEmulatorService;
-import com.piggybank.util.MockModels;
+import com.piggybank.util.mock.MockModels;
+import org.apache.http.util.Asserts;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.util.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -37,7 +39,24 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createCustomer() throws Throwable {
+    public void createAccountWithoutType() {
+        Account account = MockModels.mockAccount();
+        account.setType(null);
+        try {
+            repository.create(account);
+            Assertions.fail("Failed to throw exception for account type");
+        } catch (IllegalArgumentException e) {
+            // Pass!
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void createCustomer() throws Exception {
         Customer customer = MockModels.mockCustomer();
         Assertions.assertNotNull(repository.create(customer));
     }
@@ -46,19 +65,26 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createMerchant() throws Throwable {
+    public void createMerchant() throws Exception {
         Merchant merchant = MockModels.mockMerchant();
         Assertions.assertNotNull(repository.create(merchant));
     }
 
+    /**
+     * todo
+     */
     @Test
-    public void createMerchantWithoutBankAccount() throws Throwable {
-//        Merchant merchant = MockModels.mockMerchant();
-    }
-
-    @Test
-    public void createAccountWithoutType() throws Throwable {
-//        Account account = MockModels.mockAccount();
+    public void createMerchantWithoutBankAccount() {
+        Merchant merchant = MockModels.mockMerchant();
+        merchant.setBankAccount(null);
+        try {
+            repository.create(merchant);
+            Assertions.fail("Failed to throw exception for no bank account");
+        } catch (IllegalArgumentException e) {
+            // Pass!
+        } catch (Exception e) {
+            Assertions.fail(e);
+        }
     }
 }
 

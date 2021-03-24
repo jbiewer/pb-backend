@@ -1,5 +1,7 @@
 package com.piggybank.repository;
 
+import static com.piggybank.model.Account.AccountType;
+
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -8,11 +10,11 @@ import com.piggybank.model.Account;
 import com.piggybank.util.Util;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Interface for database interactions for accounts.
@@ -36,8 +38,10 @@ public class AccountRepository extends PBRepository {
      * @return Result of query.
      */
     @NonNull
-    public String test(String message) {
-        return "Success! Here is your message: " + message;
+    public String test(@Nullable String message) {
+        return message == null ?
+                "Success! No message supplied." :
+                "Success! Here is your message: " + message;
     }
 
     /**
@@ -45,28 +49,19 @@ public class AccountRepository extends PBRepository {
      * Fields set according to Account object parameter
      * 
      * @param newAccount - Account object representing the new account
-     * @return
+     * @return todo
      */
-    public String create(Account newAccount) throws Throwable {
-        switch (newAccount.getType()) {
-            case MERCHANT:
-                if (newAccount.getBankAccount() == null) {
-                    throw new IllegalArgumentException("Merchant account must have a bank account.");
-                }
-            case CUSTOMER:
-                break;
-            default:
-                throw new IllegalArgumentException("Must specify account type.");
+    public String create(@NonNull Account newAccount) throws Exception {
+        Util.ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type."));
+        if (newAccount.getType() == AccountType.MERCHANT) {
+            Util.ifNull(newAccount.getBankAccount()).thenThrow(
+                    new IllegalArgumentException("Merchant account must have a bank account.")
+            );
         }
+        Util.ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Account username must be specified."));
 
-        try {
-            collection.document(newAccount.getUsername()).create(newAccount).get();
-            return "Account created successfully!";
-        } catch (ExecutionException | InterruptedException e) {
-            // todo log
-            e.printStackTrace();
-            throw new Exception("Internal server error");
-        }
+        getApiFuture(collection.document(newAccount.getUsername()).create(newAccount));
+        return "Account created successfully!";
     }
 
     /**
@@ -76,9 +71,9 @@ public class AccountRepository extends PBRepository {
      * 
      * @param username - username of account to update
      * @param content - object containing fields that need updating
-     * @return 
+     * @return todo
      */
-    public String update(String username, Account content) throws Throwable {
+    public String update(@NonNull String username, @NonNull Account content) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             // Keep track of the account's current document (may be changed w/ new username).
             DocumentReference currentReference = collection.document(username);
@@ -117,11 +112,7 @@ public class AccountRepository extends PBRepository {
             return "Account successfully updated!";
         });
 
-        try {
-            return futureTx.get();
-        } catch (ExecutionException | InterruptedException e) {
-            throw e.getCause();
-        }
+        return getApiFuture(futureTx);
     }
 
     /**
@@ -131,7 +122,7 @@ public class AccountRepository extends PBRepository {
      * @param username - username linked to the account of interest
      * @return
      */
-    public Account get(String username) throws Throwable {
+    public Account get(String username) throws Exception {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(collection.document(username)).get();
             if (snapshot.exists()) {
@@ -142,10 +133,6 @@ public class AccountRepository extends PBRepository {
             }
         });
 
-        try {
-            return futureTx.get();
-        } catch (ExecutionException | InterruptedException e) {
-            throw e.getCause();
-        }
+        return getApiFuture(futureTx);
     }
 }

@@ -40,7 +40,7 @@ public class AccountController extends PBController<AccountRepository> {
      */
     @GetMapping(BASE_URL + "test")
     public ResponseEntity<?> test(
-            @RequestBody String message,
+            @RequestBody(required = false) String message,
             @CookieValue(value = "session", required = false) String sessionCookieId
     ) {
         try {
