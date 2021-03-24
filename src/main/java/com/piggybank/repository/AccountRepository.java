@@ -1,9 +1,5 @@
 package com.piggybank.repository;
 
-import static com.piggybank.model.Account.AccountType;
-import static com.piggybank.util.Util.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -15,8 +11,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.Objects;
+
+import static com.piggybank.model.Account.AccountType;
+import static com.piggybank.util.Util.ifNonNull;
+import static com.piggybank.util.Util.ifNull;
 
 /**
  * Interface for database interactions for accounts.
@@ -42,7 +41,7 @@ public class AccountRepository extends PBRepository {
     @NonNull
     public String test(@Nullable String message) {
         return message == null ?
-                "Success! No message supplied." :
+                "Success! No message supplied" :
                 "Success! Here is your message: " + message;
     }
 
@@ -53,14 +52,14 @@ public class AccountRepository extends PBRepository {
      * @param newAccount - Account object representing the new account
      * @return todo
      */
-    public String create(@NonNull Account newAccount) throws Exception {
-        ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type."));
+    public String create(@NonNull Account newAccount) throws Throwable {
+        ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type"));
         if (newAccount.getType() == AccountType.MERCHANT) {
             ifNull(newAccount.getBankAccount()).thenThrow(
-                    new IllegalArgumentException("Merchant account must have a bank account.")
+                    new IllegalArgumentException("Merchant account must have a bank account")
             );
         }
-        ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Must specify account username."));
+        ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Must specify account username"));
 
         getApiFuture(collection.document(newAccount.getUsername()).create(newAccount));
         return "Account created successfully!";
@@ -75,7 +74,7 @@ public class AccountRepository extends PBRepository {
      * @param content - object containing fields that need updating
      * @return todo
      */
-    public String update(@NonNull String username, @NonNull Account content) throws Exception {
+    public String update(@NonNull String username, @NonNull Account content) throws Throwable {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             String currentUsername = username;
 
@@ -87,7 +86,7 @@ public class AccountRepository extends PBRepository {
                     tx.delete(collection.document(username));
                     currentUsername = content.getUsername();
                 } else {
-                    throw new Exception("Account with that username not found.");
+                    throw new IllegalArgumentException("Account with that username not found");
                 }
             }
 
@@ -115,14 +114,14 @@ public class AccountRepository extends PBRepository {
      * @param username - username linked to the account of interest
      * @return todo
      */
-    public Account get(String username) throws Exception {
+    public Account get(String username) throws Throwable {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(collection.document(username)).get();
             if (snapshot.exists()) {
                 Account account = Objects.requireNonNull(snapshot.toObject(Account.class));
                 return Account.filterSensitiveData(account);
             } else {
-                throw new IllegalArgumentException("Account with that username not found.");
+                throw new IllegalArgumentException("Account with that username not found");
             }
         });
 

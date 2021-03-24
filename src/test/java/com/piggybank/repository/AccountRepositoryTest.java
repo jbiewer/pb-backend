@@ -49,7 +49,7 @@ public class AccountRepositoryTest {
     @Test
     public void testWithoutMessage() {
         String result = repository.test(null);
-        assertEquals("Success! No message supplied.", result);
+        assertEquals("Success! No message supplied", result);
     }
 
     /**
@@ -72,9 +72,9 @@ public class AccountRepositoryTest {
             repository.create(account);
             fail("Failed to throw exception for no account type");
         } catch (IllegalArgumentException e) {
-            assertEquals("Must specify account type.", e.getMessage());
-        } catch (Exception e) {
-            fail(e);
+            assertEquals("Must specify account type", e.getMessage());
+        } catch (Throwable t) {
+            fail(t);
         }
     }
 
@@ -89,9 +89,9 @@ public class AccountRepositoryTest {
             repository.create(account);
             fail("Failed to throw exception for no account username");
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Must specify account username.");
-        } catch (Exception e) {
-            fail(e);
+            assertEquals(e.getMessage(), "Must specify account username");
+        } catch (Throwable t) {
+            fail(t);
         }
     }
 
@@ -99,7 +99,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createCustomer() throws Exception {
+    public void createCustomer() throws Throwable {
         Customer customer = MockModels.mockCustomer();
         assertEquals(repository.create(customer), "Account created successfully!");
     }
@@ -108,7 +108,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createMerchant() throws Exception {
+    public void createMerchant() throws Throwable {
         Merchant merchant = MockModels.mockMerchant();
         assertEquals(repository.create(merchant), "Account created successfully!");
     }
@@ -124,9 +124,9 @@ public class AccountRepositoryTest {
             repository.create(merchant);
             fail("Failed to throw exception for no bank account");
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Merchant account must have a bank account.");
-        } catch (Exception e) {
-            fail(e);
+            assertEquals(e.getMessage(), "Merchant account must have a bank account");
+        } catch (Throwable t) {
+            fail(t);
         }
     }
 
@@ -134,7 +134,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void updateAccount() throws Exception {
+    public void updateAccount() throws Throwable {
         Account account = MockModels.mockAccount();
         account.setType(Account.AccountType.CUSTOMER);
         account.setUsername("user1");
@@ -145,6 +145,31 @@ public class AccountRepositoryTest {
         assertEquals(account, databaseAccount);
     }
 
-    
+    /**
+     * todo
+     */
+    @Test
+    public void updateAccountNewUsername() throws Throwable {
+        Account account = MockModels.mockAccount();
+        account.setType(Account.AccountType.CUSTOMER);
+        String username = account.getUsername();
+        assertEquals("Account successfully updated!", repository.update("user1", account));
+
+        Account databaseAccount = FirebaseEmulatorServices.get("Accounts", username, Account.class);
+        databaseAccount.setTransactionIds(null);
+        assertEquals(account, databaseAccount);
+    }
+
+    @Test
+    public void updateAccountUsernameNotFound() {
+        Account account = MockModels.mockCustomer();
+        try {
+            repository.update("user-that-does-not-exist", account);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Account with that username not found", e.getMessage());
+        } catch (Throwable t) {
+            fail(t);
+        }
+    }
 }
 
