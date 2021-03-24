@@ -3,6 +3,7 @@ package com.piggybank.repository;
 import static com.piggybank.model.Account.AccountType;
 import static com.piggybank.util.Util.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -14,6 +15,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -58,7 +60,7 @@ public class AccountRepository extends PBRepository {
                     new IllegalArgumentException("Merchant account must have a bank account.")
             );
         }
-        ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Account username must be specified."));
+        ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Must specify account username."));
 
         getApiFuture(collection.document(newAccount.getUsername()).create(newAccount));
         return "Account created successfully!";
@@ -74,41 +76,32 @@ public class AccountRepository extends PBRepository {
      * @return todo
      */
     public String update(@NonNull String username, @NonNull Account content) throws Exception {
-        ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
-            // Keep track of the account's current document (may be changed w/ new username).
-            DocumentReference currentReference = collection.document(username);
+        ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
+            String currentUsername = username;
 
             // Copy document over to newly labelled document, if new username was specified.
             if (content.getUsername() != null && !content.getUsername().equals(username)) {
-                DocumentReference oldReference = currentReference;
-                DocumentReference newReference = collection.document(content.getUsername());
-
-                //contains data from old account
-                DocumentSnapshot snapshot = transaction.get(oldReference).get();
+                DocumentSnapshot snapshot = tx.get(collection.document(username)).get();
                 if (snapshot.exists() && snapshot.getData() != null) {
-                    //adds all old data to new document with updated username
-                    transaction.create(newReference, snapshot.getData());
-                    transaction.delete(oldReference);
-                    currentReference = newReference;
-                    //todo: test to see if this is needed to update username field of new document
-                    // * Java's reflection is used here to throw an exception if "uesrname" field isn't found.
-                    Field field = content.getClass().getDeclaredField("username");
-                    transaction.update(currentReference, field.getName(), field.get(content));
+                    tx.set(collection.document(content.getUsername()), snapshot.getData());
+                    tx.delete(collection.document(username));
+                    currentUsername = content.getUsername();
                 } else {
                     throw new Exception("Account with that username not found.");
                 }
             }
 
-            // Lambdas only allow logically-final fields.
-            final DocumentReference currentRef = currentReference;
-
             // Change other fields if requested, except for transaction IDs.
+            DocumentReference document = collection.document(currentUsername);
             content.setTransactionIds(null);
-            for (Field declaredField : content.getClass().getDeclaredFields()) {
+            for (Field declaredField : Account.class.getDeclaredFields()) {
+                declaredField.setAccessible(true);
                 ifNonNull(declaredField.get(content)).then(value ->
-                    transaction.update(currentRef, declaredField.getName(), value)
+                    tx.update(document, declaredField.getName(), value)
                 );
+                declaredField.setAccessible(false);
             }
+
             return "Account successfully updated!";
         });
 

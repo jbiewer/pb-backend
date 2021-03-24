@@ -3,36 +3,62 @@ package com.piggybank.repository;
 import com.piggybank.model.Account;
 import com.piggybank.model.Customer;
 import com.piggybank.model.Merchant;
-import com.piggybank.util.FirebaseEmulatorService;
+import com.piggybank.util.FirebaseEmulatorServices;
 import com.piggybank.util.mock.MockModels;
-import org.apache.http.util.Asserts;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.util.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
 public class AccountRepositoryTest {
-
     @Autowired
     private AccountRepository repository;
 
+    /**
+     * todo
+     */
+    @BeforeEach
+    public void beforeEach() throws IOException, URISyntaxException {
+        URI uri = Objects.requireNonNull(ClassLoader.getSystemResource("collections")).toURI();
+        FirebaseEmulatorServices.generateFirestoreData(new File(uri));
+    }
+
+    /**
+     * todo
+     */
     @AfterEach
     public void afterEach() throws IOException, InterruptedException {
-        FirebaseEmulatorService.clearFirestoreDocuments();
+        FirebaseEmulatorServices.clearFirestoreDocuments();
     }
 
     /**
      * todo
      */
     @Test
-    public void test() {
+    public void testWithoutMessage() {
+        String result = repository.test(null);
+        assertEquals("Success! No message supplied.", result);
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void testWithMessage() {
         String result = repository.test("test");
-        Assertions.assertEquals(result, "Success! Here is your message: test");
+        assertEquals("Success! Here is your message: test", result);
     }
 
     /**
@@ -44,11 +70,28 @@ public class AccountRepositoryTest {
         account.setType(null);
         try {
             repository.create(account);
-            Assertions.fail("Failed to throw exception for account type");
+            fail("Failed to throw exception for no account type");
         } catch (IllegalArgumentException e) {
-            // Pass!
+            assertEquals("Must specify account type.", e.getMessage());
         } catch (Exception e) {
-            Assertions.fail(e);
+            fail(e);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void createAccountWithoutUsername() {
+        Account account = MockModels.mockCustomer();
+        account.setUsername(null);
+        try {
+            repository.create(account);
+            fail("Failed to throw exception for no account username");
+        } catch (IllegalArgumentException e) {
+            assertEquals(e.getMessage(), "Must specify account username.");
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -58,7 +101,7 @@ public class AccountRepositoryTest {
     @Test
     public void createCustomer() throws Exception {
         Customer customer = MockModels.mockCustomer();
-        Assertions.assertNotNull(repository.create(customer));
+        assertEquals(repository.create(customer), "Account created successfully!");
     }
 
     /**
@@ -67,7 +110,7 @@ public class AccountRepositoryTest {
     @Test
     public void createMerchant() throws Exception {
         Merchant merchant = MockModels.mockMerchant();
-        Assertions.assertNotNull(repository.create(merchant));
+        assertEquals(repository.create(merchant), "Account created successfully!");
     }
 
     /**
@@ -79,12 +122,29 @@ public class AccountRepositoryTest {
         merchant.setBankAccount(null);
         try {
             repository.create(merchant);
-            Assertions.fail("Failed to throw exception for no bank account");
+            fail("Failed to throw exception for no bank account");
         } catch (IllegalArgumentException e) {
-            // Pass!
+            assertEquals(e.getMessage(), "Merchant account must have a bank account.");
         } catch (Exception e) {
-            Assertions.fail(e);
+            fail(e);
         }
     }
+
+    /**
+     * todo
+     */
+    @Test
+    public void updateAccount() throws Exception {
+        Account account = MockModels.mockAccount();
+        account.setType(Account.AccountType.CUSTOMER);
+        account.setUsername("user1");
+        assertEquals("Account successfully updated!", repository.update(account.getUsername(), account));
+
+        Account databaseAccount = FirebaseEmulatorServices.get("Accounts", account.getUsername(), Account.class);
+        databaseAccount.setTransactionIds(null);
+        assertEquals(account, databaseAccount);
+    }
+
+    
 }
 

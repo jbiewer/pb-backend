@@ -1,0 +1,56 @@
+[
+  {
+    "username": "user1",
+    "password": "user1-pw",
+    "email": "user1@email.com",
+    "type": "CUSTOMER",
+    "profilePictureUrl": "/path/to/user1/pic.jpg",
+    "balance": 120.21,
+    "bankAccount": {
+      "accountNumber": 12345,
+      "routingNumber": 67890,
+      "nameOnAccount": "User1 Name"
+    },
+    "transactionIds": [
+      "tx-id0",
+      "tx-id1",
+      "tx-id2"
+    ]
+  },
+  {
+    "username": "user2",
+    "password": "user2-pw",
+    "email": "user2@email.com",
+    "type": "MERCHANT",
+    "profilePictureUrl": "/path/to/user2/pic.jpg",
+    "balance": 420.69,
+    "bankAccount": {
+      "accountNumber": 10100,
+      "routingNumber": 20200,
+      "nameOnAccount": "User2 Name"
+    },
+    "transactionIds": [
+      "tx-id3",
+      "tx-id4",
+      "tx-id5"
+    ]
+  },
+  {
+    "username": "jbiewer",
+    "password": "notJacobsPassword123",
+    "email": "jbiewer@wisc.edu",
+    "type": "CUSTOMER",
+    "profilePictureUrl": "/path/to/jacobs/pic.jpg",
+    "balance": 0.01,
+    "bankAccount": {
+      "accountNumber": 13579,
+      "routingNumber": 24680,
+      "nameOnAccount": "Jacob Biewer"
+    },
+    "transactionIds": [
+      "tx-id6",
+      "tx-id7",
+      "tx-id8"
+    ]
+  }
+]

@@ -1,6 +1,7 @@
 package com.piggybank.model;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * todo
@@ -100,5 +101,48 @@ public class Account {
 
     public void setTransactionIds(List<String> transactionIds) {
         this.transactionIds = transactionIds;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", type=" + type +
+                ", profilePictureUrl='" + profilePictureUrl + '\'' +
+                ", balance=" + balance +
+                ", bankAccount=" + bankAccount +
+                ", transactionIds=" + transactionIds +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Account account = (Account) o;
+        return Objects.equals(username, account.username) &&
+                Objects.equals(password, account.password) &&
+                Objects.equals(email, account.email) &&
+                type == account.type &&
+                Objects.equals(profilePictureUrl, account.profilePictureUrl) &&
+                Objects.equals(balance, account.balance) &&
+                Objects.equals(bankAccount, account.bankAccount) &&
+                Objects.equals(transactionIds, account.transactionIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                username,
+                password,
+                email,
+                type,
+                profilePictureUrl,
+                balance,
+                bankAccount,
+                transactionIds
+        );
     }
 }
