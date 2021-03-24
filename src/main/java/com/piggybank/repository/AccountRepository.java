@@ -1,13 +1,13 @@
 package com.piggybank.repository;
 
 import static com.piggybank.model.Account.AccountType;
+import static com.piggybank.util.Util.*;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
-import com.piggybank.util.Util;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -52,13 +52,13 @@ public class AccountRepository extends PBRepository {
      * @return todo
      */
     public String create(@NonNull Account newAccount) throws Exception {
-        Util.ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type."));
+        ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type."));
         if (newAccount.getType() == AccountType.MERCHANT) {
-            Util.ifNull(newAccount.getBankAccount()).thenThrow(
+            ifNull(newAccount.getBankAccount()).thenThrow(
                     new IllegalArgumentException("Merchant account must have a bank account.")
             );
         }
-        Util.ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Account username must be specified."));
+        ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Account username must be specified."));
 
         getApiFuture(collection.document(newAccount.getUsername()).create(newAccount));
         return "Account created successfully!";
@@ -105,7 +105,7 @@ public class AccountRepository extends PBRepository {
             // Change other fields if requested, except for transaction IDs.
             content.setTransactionIds(null);
             for (Field declaredField : content.getClass().getDeclaredFields()) {
-                Util.ifNonNull(declaredField.get(content)).then(value ->
+                ifNonNull(declaredField.get(content)).then(value ->
                     transaction.update(currentRef, declaredField.getName(), value)
                 );
             }
@@ -120,7 +120,7 @@ public class AccountRepository extends PBRepository {
      * Should not send back sensitive information
      * 
      * @param username - username linked to the account of interest
-     * @return
+     * @return todo
      */
     public Account get(String username) throws Exception {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
