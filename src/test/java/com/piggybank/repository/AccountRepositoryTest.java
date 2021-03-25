@@ -246,7 +246,6 @@ public class AccountRepositoryTest {
     @Test
     public void getReturnsAccountObject() {
         try {
-            // System.out.println("*****RESPONSE ENTITY OK: "+ResponseEntity.ok(repository.get("user1@email.com")));
             assertEquals(repository.get("user1@email.com").getClass(), Account.class); 
         } catch(Throwable t) {
             fail(t);
