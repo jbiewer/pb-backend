@@ -13,6 +13,8 @@ import javax.security.auth.message.AuthException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.piggybank.util.Util.ifNonNull;
+
 
 /**
  * Account-related application interface.
@@ -177,7 +179,8 @@ public class AccountController extends PBController<AccountRepository> {
     ) {
         try {
             authenticator.validateSession(sessionCookieId);
-            return ResponseEntity.ok(repository.get(email));
+            Account account = repository.get(email);
+            return ResponseEntity.ok(account);
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch (Throwable t) {

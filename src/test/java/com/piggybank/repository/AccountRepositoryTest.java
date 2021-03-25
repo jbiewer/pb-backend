@@ -4,7 +4,7 @@ import com.piggybank.model.Account;
 import com.piggybank.model.Customer;
 import com.piggybank.model.Merchant;
 import com.piggybank.util.FirebaseEmulatorServices;
-import com.piggybank.util.mock.MockModels;
+import com.piggybank.mocks.MockModels;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,8 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class AccountRepositoryTest {
@@ -237,6 +236,22 @@ public class AccountRepositoryTest {
             repository.update("user-that-does-not-exist", account);
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
+        } catch (Throwable t) {
+            fail(t);
+        }
+    }
+
+    @Test
+    public void getSucceeds() {
+        Account account, databaseAccount;
+        try {
+            account = repository.get("user1@email.com");
+            assertNotNull(account);
+
+            databaseAccount = FirebaseEmulatorServices.get("Accounts", "user1@email.com", Account.class);
+            databaseAccount.setTransactionIds(null);
+            databaseAccount.setPassword(null);
+            assertEquals(account, databaseAccount);
         } catch (Throwable t) {
             fail(t);
         }
