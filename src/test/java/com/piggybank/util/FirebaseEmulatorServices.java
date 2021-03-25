@@ -1,14 +1,12 @@
 package com.piggybank.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +49,16 @@ public class FirebaseEmulatorServices {
         }
     }
 
+    /**
+     * todo
+     * @param collectionId
+     * @param documentId
+     * @param modelClass
+     * @param <T>
+     * @return
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     public static <T> T get(String collectionId, String documentId, Class<T> modelClass)
             throws ExecutionException, InterruptedException {
         DocumentSnapshot snapshot = FirestoreClient.getFirestore()
@@ -60,6 +68,12 @@ public class FirebaseEmulatorServices {
         return snapshot.toObject(modelClass);
     }
 
+    /**
+     * todo
+     * @param outputStream
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     public static void printFirestore(OutputStream outputStream) throws ExecutionException, InterruptedException {
         PrintStream printer = new PrintStream(outputStream);
         for (CollectionReference collection : FirestoreClient.getFirestore().listCollections()) {
@@ -71,6 +85,9 @@ public class FirebaseEmulatorServices {
         }
     }
 
+    /**
+     * todo
+     */
     private static void addAccounts(ObjectMapper mapper, File file) throws IOException {
         if (file.exists()) {
             CollectionReference collection = FirestoreClient.getFirestore().collection("Accounts");

@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -47,7 +46,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void testWithoutMessage() {
+    public void testWithoutMessageSucceeds() {
         String result = repository.test(null);
         assertEquals("Success! No message supplied", result);
     }
@@ -56,7 +55,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void testWithMessage() {
+    public void testWithMessageSucceeds() {
         String result = repository.test("test");
         assertEquals("Success! Here is your message: test", result);
     }
@@ -65,7 +64,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createAccountWithoutType() {
+    public void createAccountWithoutTypeFails() {
         Account account = MockModels.mockAccount();
         account.setType(null);
         try {
@@ -82,7 +81,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createAccountWithoutUsername() {
+    public void createAccountWithoutUsernameFails() {
         Account account = MockModels.mockCustomer();
         account.setUsername(null);
         try {
@@ -99,7 +98,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createCustomer() throws Throwable {
+    public void createCustomerSucceeds() throws Throwable {
         Customer customer = MockModels.mockCustomer();
         assertEquals(repository.create(customer), "Account created successfully!");
     }
@@ -108,7 +107,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createMerchant() throws Throwable {
+    public void createMerchantSucceeds() throws Throwable {
         Merchant merchant = MockModels.mockMerchant();
         assertEquals(repository.create(merchant), "Account created successfully!");
     }
@@ -117,7 +116,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createMerchantWithoutBankAccount() {
+    public void createMerchantWithoutBankAccountFails() {
         Merchant merchant = MockModels.mockMerchant();
         merchant.setBankAccount(null);
         try {
@@ -134,7 +133,51 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void updateAccount() throws Throwable {
+    public void loginSucceeds() throws Throwable {
+        String username = "user1";
+        String password = "user1-pw";
+        assertEquals("Login successful!", repository.login(username, password));
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void loginFailsUsernameNotFound() {
+        String username = "username-does-not-exist";
+        String password = "user1-pw";
+        try {
+            repository.login(username, password);
+            fail("Failed to throw exception for username not found");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Account with that username not found", e.getMessage());
+        } catch (Throwable e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void loginFailsPasswordMismatch() {
+        String username = "user1";
+        String password = "not-user1-pw";
+        try {
+            repository.login(username, password);
+            fail("Failed to throw exception for password mismatch");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Password did not match", e.getMessage());
+        } catch (Throwable e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void updateAccountSucceeds() throws Throwable {
         Account account = MockModels.mockAccount();
         account.setType(Account.AccountType.CUSTOMER);
         account.setUsername("user1");
@@ -149,7 +192,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void updateAccountNewUsername() throws Throwable {
+    public void updateAccountSucceedsNewUsername() throws Throwable {
         Account account = MockModels.mockAccount();
         account.setType(Account.AccountType.CUSTOMER);
         String username = account.getUsername();
@@ -160,8 +203,11 @@ public class AccountRepositoryTest {
         assertEquals(account, databaseAccount);
     }
 
+    /**
+     * todo
+     */
     @Test
-    public void updateAccountUsernameNotFound() {
+    public void updateAccountFailsUsernameNotFound() {
         Account account = MockModels.mockCustomer();
         try {
             repository.update("user-that-does-not-exist", account);

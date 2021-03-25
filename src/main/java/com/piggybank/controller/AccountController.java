@@ -106,16 +106,20 @@ public class AccountController extends PBController<AccountRepository> {
      */
     @PostMapping(BASE_URL + "log-in")
     public ResponseEntity<?> login(
+            @RequestParam String username,
+            @RequestParam String password,
             @RequestParam String token,
             HttpServletResponse response
     ) {
         try {
             response.addCookie(authenticator.generateNewSession(token));
-            return ResponseEntity.ok("Login successful");
+            return ResponseEntity.ok(repository.login(username, password));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
+        } catch (Throwable t) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
         }
     }
 

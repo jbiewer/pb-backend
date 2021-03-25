@@ -14,8 +14,7 @@ import java.lang.reflect.Field;
 import java.util.Objects;
 
 import static com.piggybank.model.Account.AccountType;
-import static com.piggybank.util.Util.ifNonNull;
-import static com.piggybank.util.Util.ifNull;
+import static com.piggybank.util.Util.*;
 
 /**
  * Interface for database interactions for accounts.
@@ -55,14 +54,39 @@ public class AccountRepository extends PBRepository {
     public String create(@NonNull Account newAccount) throws Throwable {
         ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type"));
         if (newAccount.getType() == AccountType.MERCHANT) {
-            ifNull(newAccount.getBankAccount()).thenThrow(
-                    new IllegalArgumentException("Merchant account must have a bank account")
-            );
+            ifNull(newAccount.getBankAccount()).thenThrow(new IllegalArgumentException("Merchant account must have a bank account"));
         }
         ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Must specify account username"));
 
         getApiFuture(collection.document(newAccount.getUsername()).create(newAccount));
         return "Account created successfully!";
+    }
+
+    /**
+     * todo
+     * @param username
+     * @param password
+     * @return
+     * @throws Throwable
+     */
+    public String login(@NonNull String username, @NonNull String password) throws Throwable {
+        ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
+            // Confirm account exists.
+            DocumentSnapshot snapshot = tx.get(collection.document(username)).get();
+            if (!snapshot.exists()) {
+                throw new IllegalArgumentException("Account with that username not found");
+            }
+
+            // Account exists--verify password.
+            String storedPassword = snapshot.getString("password");
+            if (password.equals(storedPassword)) {
+                return "Login successful!";
+            } else {
+                throw new IllegalArgumentException("Password did not match");
+            }
+        });
+
+        return getApiFuture(futureTx);
     }
 
     /**

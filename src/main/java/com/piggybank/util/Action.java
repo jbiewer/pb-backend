@@ -2,19 +2,19 @@ package com.piggybank.util;
 
 import java.util.function.Function;
 
-public class Action<T> {
-    private final T object;
+public class Action<O> {
+    private final O object;
     private final boolean doNothing;
 
-    public static <O> Action<O> doNothing() {
+    public static <E> Action<E> doNothing() {
         return new Action<>(true);
     }
 
-    public static <O> Action<O> of(O object) {
+    public static <E> Action<E> of(E object) {
         return new Action<>(object);
     }
 
-    private Action(T object) {
+    private Action(O object) {
         this.object = object;
         this.doNothing = false;
     }
@@ -24,19 +24,21 @@ public class Action<T> {
         this.doNothing = doNothing;
     }
 
-    public T get() {
+    public O get() {
         return object;
     }
 
-    public <R> void then(Function<T, R> function) {
+    public <R> Action<R> then(Function<O, R> function) {
         if (!doNothing) {
-            function.apply(object);
+            return Action.of(function.apply(object));
         }
+        return Action.doNothing();
     }
 
-    public <E extends Throwable> void thenThrow(E throwable) throws E {
+    public <T extends Throwable> Action<O> thenThrow(T throwable) throws T {
         if (!doNothing) {
             throw throwable;
         }
+        return this;
     }
 }
