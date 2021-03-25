@@ -156,20 +156,28 @@ public class AccountRepository extends PBRepository {
         return getApiFuture(futureTx);
     }
 
+    
     /**
      * 
-     * @param email
+     * @param username
      * @return
      * @throws Throwable
      */
-    public Boolean emailExists(String email) throws Throwable {
+    public Boolean usernameExists(String username) throws Throwable {
         ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
-            if(transaction.get(collection.document(email)).get().exists()){
-                return true; 
+            //get all account documents in db
+            ApiFuture<QuerySnapshot> orderFuture = collection.get();
+            List<QueryDocumentSnapshot> orderDocuments = orderFuture.get().getDocuments();
+            //return true if one of the docs' matches input username
+            for(QueryDocumentSnapshot doc: orderDocuments) {
+                if(doc.toObject(Account.class).getUsername().equals(username)) {
+                    return true; 
+                }
             }
             return false; 
         });
 
         return getApiFuture(futureTx);
+        
     }
 }
