@@ -83,12 +83,12 @@ public class AccountRepositoryTest {
     @Test
     public void createAccountWithoutUsernameFails() {
         Account account = MockModels.mockCustomer();
-        account.setUsername(null);
+        account.setEmail(null);
         try {
             repository.create(account);
-            fail("Failed to throw exception for no account username");
+            fail("Failed to throw exception for no account email");
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "Must specify account username");
+            assertEquals(e.getMessage(), "Must specify account email");
         } catch (Throwable t) {
             fail(t);
         }
@@ -98,18 +98,26 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createCustomerSucceeds() throws Throwable {
-        Customer customer = MockModels.mockCustomer();
-        assertEquals(repository.create(customer), "Account created successfully!");
+    public void createCustomerSucceeds() {
+        try {
+            Customer customer = MockModels.mockCustomer();
+            assertEquals(repository.create(customer), "Account created successfully!");
+        } catch (Throwable t) {
+            fail(t);
+        }
     }
 
     /**
      * todo
      */
     @Test
-    public void createMerchantSucceeds() throws Throwable {
-        Merchant merchant = MockModels.mockMerchant();
-        assertEquals(repository.create(merchant), "Account created successfully!");
+    public void createMerchantSucceeds() {
+        try {
+            Merchant merchant = MockModels.mockMerchant();
+            assertEquals(repository.create(merchant), "Account created successfully!");
+        } catch (Throwable t) {
+            fail(t);
+        }
     }
 
     /**
@@ -133,10 +141,14 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void loginSucceeds() throws Throwable {
-        String username = "user1";
+    public void loginSucceeds() {
+        String email = "user1@email.com";
         String password = "user1-pw";
-        assertEquals("Login successful!", repository.login(username, password));
+        try {
+            assertEquals("Login successful!", repository.login(email, password));
+        } catch (Throwable t) {
+            fail(t);
+        }
     }
 
     /**
@@ -150,7 +162,7 @@ public class AccountRepositoryTest {
             repository.login(username, password);
             fail("Failed to throw exception for username not found");
         } catch (IllegalArgumentException e) {
-            assertEquals("Account with that username not found", e.getMessage());
+            assertEquals("Account with that email not found", e.getMessage());
         } catch (Throwable e) {
             fail(e);
         }
@@ -161,10 +173,10 @@ public class AccountRepositoryTest {
      */
     @Test
     public void loginFailsPasswordMismatch() {
-        String username = "user1";
+        String email = "user1@email.com";
         String password = "not-user1-pw";
         try {
-            repository.login(username, password);
+            repository.login(email, password);
             fail("Failed to throw exception for password mismatch");
         } catch (IllegalArgumentException e) {
             assertEquals("Password did not match", e.getMessage());
@@ -177,30 +189,42 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void updateAccountSucceeds() throws Throwable {
+    public void updateAccountSucceeds() {
         Account account = MockModels.mockAccount();
-        account.setType(Account.AccountType.CUSTOMER);
-        account.setUsername("user1");
-        assertEquals("Account successfully updated!", repository.update(account.getUsername(), account));
+        Account databaseAccount;
 
-        Account databaseAccount = FirebaseEmulatorServices.get("Accounts", account.getUsername(), Account.class);
-        databaseAccount.setTransactionIds(null);
-        assertEquals(account, databaseAccount);
+        try {
+            account.setType(Account.AccountType.CUSTOMER);
+            account.setEmail("user1@email.com");
+            assertEquals("Account successfully updated!", repository.update(account.getEmail(), account));
+
+            databaseAccount = FirebaseEmulatorServices.get("Accounts", account.getEmail(), Account.class);
+            databaseAccount.setTransactionIds(null);
+            assertEquals(account, databaseAccount);
+        } catch (Throwable t) {
+            fail(t);
+        }
     }
 
     /**
      * todo
      */
     @Test
-    public void updateAccountSucceedsNewUsername() throws Throwable {
+    public void updateAccountSucceedsNewUsername() {
         Account account = MockModels.mockAccount();
-        account.setType(Account.AccountType.CUSTOMER);
-        String username = account.getUsername();
-        assertEquals("Account successfully updated!", repository.update("user1", account));
+        Account databaseAccount;
 
-        Account databaseAccount = FirebaseEmulatorServices.get("Accounts", username, Account.class);
-        databaseAccount.setTransactionIds(null);
-        assertEquals(account, databaseAccount);
+        try {
+            account.setType(Account.AccountType.CUSTOMER);
+            String email = account.getEmail();
+            assertEquals("Account successfully updated!", repository.update("user1@email.com", account));
+
+            databaseAccount = FirebaseEmulatorServices.get("Accounts", email, Account.class);
+            databaseAccount.setTransactionIds(null);
+            assertEquals(account, databaseAccount);
+        } catch (Throwable t) {
+            fail(t);
+        }
     }
 
     /**
@@ -212,7 +236,7 @@ public class AccountRepositoryTest {
         try {
             repository.update("user-that-does-not-exist", account);
         } catch (IllegalArgumentException e) {
-            assertEquals("Account with that username not found", e.getMessage());
+            assertEquals("Account with that email not found", e.getMessage());
         } catch (Throwable t) {
             fail(t);
         }

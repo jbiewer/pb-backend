@@ -92,7 +92,7 @@ public class FirebaseEmulatorServices {
         if (file.exists()) {
             CollectionReference collection = FirestoreClient.getFirestore().collection("Accounts");
             for (Account account : mapper.readValue(file, Account[].class)) {
-                collection.document(account.getUsername()).set(account);
+                collection.document(account.getEmail()).set(account);
             }
         }
     }
