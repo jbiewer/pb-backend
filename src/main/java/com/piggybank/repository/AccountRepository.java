@@ -3,6 +3,8 @@ package com.piggybank.repository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
 import org.springframework.core.env.Environment;
@@ -11,6 +13,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Objects;
 
 import static com.piggybank.model.Account.AccountType;
@@ -148,6 +151,23 @@ public class AccountRepository extends PBRepository {
             } else {
                 throw new IllegalArgumentException("Account with that email not found");
             }
+        });
+
+        return getApiFuture(futureTx);
+    }
+
+    /**
+     * 
+     * @param email
+     * @return
+     * @throws Throwable
+     */
+    public Boolean emailExists(String email) throws Throwable {
+        ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
+            if(transaction.get(collection.document(email)).get().exists()){
+                return true; 
+            }
+            return false; 
         });
 
         return getApiFuture(futureTx);

@@ -272,5 +272,16 @@ public class AccountRepositoryTest {
             fail(t);
         }
     }
+
+    @Test
+    public void emailExistsSucceeds() {
+        try {
+            assertEquals(repository.emailExists("user1@email.com"), true); 
+            assertEquals(repository.emailExists("nonexistent-email@email.com"), false);
+        } catch(Throwable t) {
+            fail(t);
+        }
+    }
 }
+
 

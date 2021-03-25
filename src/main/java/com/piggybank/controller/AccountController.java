@@ -184,4 +184,18 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
         }
     }
+
+    /**
+     * 
+     * @param email
+     * @return
+     */
+    @GetMapping(BASE_URL + "emailExists")
+    public ResponseEntity<?> emailExists(@RequestParam String email) {
+        try {
+            return ResponseEntity.ok(repository.emailExists(email));
+        } catch(Throwable t) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+        }
+    }
 }
