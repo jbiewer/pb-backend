@@ -57,6 +57,7 @@ public class AccountRepository extends PBRepository {
             ifNull(newAccount.getBankAccount()).thenThrow(new IllegalArgumentException("Merchant account must have a bank account"));
         }
         ifNull(newAccount.getEmail()).thenThrow(new IllegalArgumentException("Must specify account email"));
+        ifNull(newAccount.getPassword()).thenThrow(new IllegalArgumentException("Must specify account password"));
 
         //create document where id = email
         getApiFuture(collection.document(newAccount.getEmail()).create(newAccount));

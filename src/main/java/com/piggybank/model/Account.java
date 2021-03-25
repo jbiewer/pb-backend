@@ -4,13 +4,15 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * todo
+ * Represents how an account is structured in Firestore.
  */
 public class Account {
     /**
-     * todo
-     * @param account
-     * @return
+     * Given an account instance, removes any sensitive data such as encrypted passwords and
+     * transactions ID's.
+     *
+     * @param account Account containing sensitive information to be removed.
+     * @return The same account instance with sensitive information removed.
      */
     public static Account filterSensitiveData(Account account) {
         account.setPassword(null);

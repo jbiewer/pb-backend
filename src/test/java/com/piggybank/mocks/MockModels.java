@@ -1,4 +1,4 @@
-package com.piggybank.util.mock;
+package com.piggybank.mocks;
 
 import com.piggybank.model.Account;
 import com.piggybank.model.BankAccount;

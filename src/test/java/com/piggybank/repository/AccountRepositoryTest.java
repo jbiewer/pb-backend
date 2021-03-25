@@ -4,7 +4,7 @@ import com.piggybank.model.Account;
 import com.piggybank.model.Customer;
 import com.piggybank.model.Merchant;
 import com.piggybank.util.FirebaseEmulatorServices;
-import com.piggybank.util.mock.MockModels;
+import com.piggybank.mocks.MockModels;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class AccountRepositoryTest {

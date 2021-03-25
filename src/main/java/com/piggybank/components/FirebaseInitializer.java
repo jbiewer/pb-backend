@@ -35,11 +35,14 @@ public class FirebaseInitializer {
         String databaseUrl = Objects.requireNonNull(env.getProperty("firebase.database.url"));
         String serviceAccountId = Objects.requireNonNull(env.getProperty("firebase.service-account-id"));
 
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.getApplicationDefault())
-                .setDatabaseUrl(databaseUrl)
-                .setServiceAccountId(serviceAccountId)
-                .build();
-         FirebaseApp.initializeApp(options);
+        // Initialize the default app if it doesn't exist.
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setDatabaseUrl(databaseUrl)
+                    .setServiceAccountId(serviceAccountId)
+                    .build();
+            FirebaseApp.initializeApp(options);
+        }
     }
 }

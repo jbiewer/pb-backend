@@ -2,9 +2,10 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 plugins {
+    id 'java'
     id 'org.springframework.boot' version '2.4.4'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-    id 'java'
+    id 'jacoco'
 }
 
 group 'com.piggybank'
@@ -24,6 +25,9 @@ dependencies {
     // Firebase
     implementation 'com.google.firebase:firebase-admin:7.1.0'
     implementation 'com.google.cloud:google-cloud-firestore:2.1.0'
+
+    // Testing
+    testImplementation 'org.mockito:mockito-core:3.8.0'
 }
 
 /**
@@ -71,4 +75,8 @@ test {
     environment "GCLOUD_PROJECT", "piggybank-104d3"
     environment "FIRESTORE_EMULATOR_HOST", "localhost:9001"
     environment "GOOGLE_APPLICATION_CREDENTIALS", "secret/pb-backend-pk.json"
+}
+
+jacocoTestReport {
+    dependsOn test
 }
