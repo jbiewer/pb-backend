@@ -106,14 +106,14 @@ public class AccountController extends PBController<AccountRepository> {
      */
     @PostMapping(BASE_URL + "log-in")
     public ResponseEntity<?> login(
-            @RequestParam String username,
+            @RequestParam String email,
             @RequestParam String password,
             @RequestParam String token,
             HttpServletResponse response
     ) {
         try {
             response.addCookie(authenticator.generateNewSession(token));
-            return ResponseEntity.ok(repository.login(username, password));
+            return ResponseEntity.ok(repository.login(email, password));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
@@ -143,20 +143,20 @@ public class AccountController extends PBController<AccountRepository> {
 
     /**
      * todo
-     * @param username
+     * @param email
      * @param content
      * @param sessionCookieId
      * @return
      */
     @PutMapping(BASE_URL + "update")
     public ResponseEntity<?> update(
-            @RequestParam String username,
+            @RequestParam String email,
             @RequestBody Account content,
             @CookieValue(value = "session") String sessionCookieId
     ) {
         try {
             authenticator.validateSession(sessionCookieId);
-            return ResponseEntity.ok(repository.update(username, content));
+            return ResponseEntity.ok(repository.update(email, content));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch (Throwable t) {
@@ -166,18 +166,18 @@ public class AccountController extends PBController<AccountRepository> {
 
     /**
      * todo
-     * @param username
+     * @param email
      * @param sessionCookieId
      * @return
      */
     @GetMapping(BASE_URL + "get")
     public ResponseEntity<?> get(
-            @RequestParam String username,
+            @RequestParam String email,
             @CookieValue(value = "session") String sessionCookieId
     ) {
         try {
             authenticator.validateSession(sessionCookieId);
-            return ResponseEntity.ok(repository.get(username));
+            return ResponseEntity.ok(repository.get(email));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch (Throwable t) {
