@@ -26,7 +26,7 @@ public class SessionAuthenticator {
      * @throws FirebaseAuthException If the session ID is not authentic, or has been revoked.
      */
     public void validateSession(@NonNull String sessionCookie) throws FirebaseAuthException {
-        FirebaseAuth.getInstance().verifyIdToken(sessionCookie, true);
+        FirebaseAuth.getInstance().verifySessionCookie(sessionCookie, true);
     }
 
     /**
