@@ -45,7 +45,7 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * Creates new account if one not found with same username. 
+     * Creates new account if one not found with same email. 
      * Fields set according to Account object parameter
      * 
      * @param newAccount - Account object representing the new account
@@ -56,25 +56,26 @@ public class AccountRepository extends PBRepository {
         if (newAccount.getType() == AccountType.MERCHANT) {
             ifNull(newAccount.getBankAccount()).thenThrow(new IllegalArgumentException("Merchant account must have a bank account"));
         }
-        ifNull(newAccount.getUsername()).thenThrow(new IllegalArgumentException("Must specify account username"));
+        ifNull(newAccount.getEmail()).thenThrow(new IllegalArgumentException("Must specify account email"));
 
-        getApiFuture(collection.document(newAccount.getUsername()).create(newAccount));
+        //create document where id = email
+        getApiFuture(collection.document(newAccount.getEmail()).create(newAccount));
         return "Account created successfully!";
     }
 
     /**
      * todo
-     * @param username
+     * @param email
      * @param password
      * @return
      * @throws Throwable
      */
-    public String login(@NonNull String username, @NonNull String password) throws Throwable {
+    public String login(@NonNull String email, @NonNull String password) throws Throwable {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             // Confirm account exists.
-            DocumentSnapshot snapshot = tx.get(collection.document(username)).get();
+            DocumentSnapshot snapshot = tx.get(collection.document(email)).get();
             if (!snapshot.exists()) {
-                throw new IllegalArgumentException("Account with that username not found");
+                throw new IllegalArgumentException("Account with that email not found");
             }
 
             // Account exists--verify password.
@@ -90,32 +91,32 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * Updates the account info if one exists with given username. If fields of the Account
-     * object parameter are not null, the fields of the account associated with the username parameter
+     * Updates the account info if one exists with given email. If fields of the Account
+     * object parameter are not null, the fields of the account associated with the email parameter
      * are updated
      * 
-     * @param username - username of account to update
+     * @param email - username of account to update
      * @param content - object containing fields that need updating
      * @return todo
      */
-    public String update(@NonNull String username, @NonNull Account content) throws Throwable {
+    public String update(@NonNull String email, @NonNull Account content) throws Throwable {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
-            String currentUsername = username;
+            String currentEmail = email;
 
             // Copy document over to newly labelled document, if new username was specified.
-            if (content.getUsername() != null && !content.getUsername().equals(username)) {
-                DocumentSnapshot snapshot = tx.get(collection.document(username)).get();
+            if (content.getEmail() != null && !content.getEmail().equals(email)) {
+                DocumentSnapshot snapshot = tx.get(collection.document(email)).get();
                 if (snapshot.exists() && snapshot.getData() != null) {
-                    tx.set(collection.document(content.getUsername()), snapshot.getData());
-                    tx.delete(collection.document(username));
-                    currentUsername = content.getUsername();
+                    tx.set(collection.document(content.getEmail()), snapshot.getData());
+                    tx.delete(collection.document(email));
+                    currentEmail = content.getEmail();
                 } else {
-                    throw new IllegalArgumentException("Account with that username not found");
+                    throw new IllegalArgumentException("Account with that email not found");
                 }
             }
 
             // Change other fields if requested, except for transaction IDs.
-            DocumentReference document = collection.document(currentUsername);
+            DocumentReference document = collection.document(currentEmail);
             content.setTransactionIds(null);
             for (Field declaredField : Account.class.getDeclaredFields()) {
                 declaredField.setAccessible(true);
@@ -132,20 +133,20 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * Get the account info associated with the given username. 
+     * Get the account info associated with the given email. 
      * Should not send back sensitive information
      * 
-     * @param username - username linked to the account of interest
+     * @param email - email linked to the account of interest
      * @return todo
      */
-    public Account get(String username) throws Throwable {
+    public Account get(String email) throws Throwable {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
-            DocumentSnapshot snapshot = transaction.get(collection.document(username)).get();
+            DocumentSnapshot snapshot = transaction.get(collection.document(email)).get();
             if (snapshot.exists()) {
                 Account account = Objects.requireNonNull(snapshot.toObject(Account.class));
                 return Account.filterSensitiveData(account);
             } else {
-                throw new IllegalArgumentException("Account with that username not found");
+                throw new IllegalArgumentException("Account with that email not found");
             }
         });
 
