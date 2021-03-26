@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +81,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void createAccountWithoutUsernameFails() {
+    public void createAccountWithoutEmailFails() {
         Account account = MockModels.mockCustomer();
         account.setEmail(null);
         try {
@@ -154,12 +155,12 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void loginFailsUsernameNotFound() {
-        String username = "username-does-not-exist";
+    public void loginFailsEmailNotFound() {
+        String email = "email-does-not-exist@email.com";
         String password = "user1-pw";
         try {
-            repository.login(username, password);
-            fail("Failed to throw exception for username not found");
+            repository.login(email, password);
+            fail("Failed to throw exception for email not found");
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
         } catch (Throwable e) {
@@ -230,10 +231,10 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void updateAccountFailsUsernameNotFound() {
+    public void updateAccountFailsEmailNotFound() {
         Account account = MockModels.mockCustomer();
         try {
-            repository.update("user-that-does-not-exist", account);
+            repository.update("user-that-does-not-exist@email.com", account);
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
         } catch (Throwable t) {
@@ -241,6 +242,9 @@ public class AccountRepositoryTest {
         }
     }
 
+    /**
+     * todo
+     */
     @Test
     public void getSucceeds() {
         Account account, databaseAccount;
@@ -256,5 +260,58 @@ public class AccountRepositoryTest {
             fail(t);
         }
     }
+
+    /**
+     * todo
+     */
+    @Test
+    public void getReturnsAccountObject() {
+        try {
+            assertEquals(repository.get("user1@email.com").getClass(), Account.class); 
+        } catch(Throwable t) {
+            fail(t);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void getDoesNotReturnSensitiveInfo() {
+        try {
+            assertNull(repository.get("user1@email.com").getPassword());
+        } catch(Throwable t) {
+            fail(t);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void getFailsEmailNotFound() {
+        try {
+            repository.get("email-does-not-exist@email.com");
+            fail("Failed to throw exception for email not found");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Account with that email not found", e.getMessage());
+        } catch(Throwable t) {
+            fail(t);
+        }
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void usernameExistsSucceeds() {
+        try {
+            assertTrue(repository.usernameExists("user1"));
+            assertFalse(repository.usernameExists("nonexistent-user"));
+        } catch(Throwable t) {
+            fail(t);
+        }
+    }
 }
+
 
