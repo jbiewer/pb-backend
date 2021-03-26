@@ -24,10 +24,6 @@ public class Action<O> {
         this.doNothing = doNothing;
     }
 
-    public O get() {
-        return object;
-    }
-
     public <R> Action<R> then(Function<O, R> function) {
         if (!doNothing) {
             return Action.of(function.apply(object));

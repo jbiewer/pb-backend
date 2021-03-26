@@ -5,6 +5,7 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
 import org.apache.http.HttpStatus;
@@ -17,6 +18,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class FirebaseEmulatorServices {
@@ -25,7 +28,7 @@ public class FirebaseEmulatorServices {
      * @param collectionsDirectory
      * @throws IOException
      */
-    public static void generateFirestoreData(File collectionsDirectory) throws IOException {
+    public static void generateFirestoreData(File collectionsDirectory) throws IOException, ExecutionException, InterruptedException {
         if (!collectionsDirectory.isDirectory()) {
             throw new IllegalArgumentException("collections directory was not a directory.");
         }
@@ -91,12 +94,16 @@ public class FirebaseEmulatorServices {
     /**
      * todo
      */
-    private static void addAccounts(ObjectMapper mapper, File file) throws IOException {
+    private static void addAccounts(ObjectMapper mapper, File file) throws IOException, ExecutionException, InterruptedException {
+        List<ApiFuture<WriteResult>> futures = new ArrayList<>();
         if (file.exists()) {
             CollectionReference collection = FirestoreClient.getFirestore().collection("Accounts");
             for (Account account : mapper.readValue(file, Account[].class)) {
-                collection.document(account.getEmail()).set(account);
+                futures.add(collection.document(account.getEmail()).set(account));
             }
+        }
+        for (ApiFuture<WriteResult> future : futures) {
+            future.get();
         }
     }
 }
