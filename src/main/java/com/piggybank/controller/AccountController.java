@@ -54,7 +54,7 @@ public class AccountController extends PBController<AccountRepository> {
      * is specified, and error will be returned as well.
      *
      * Example:
-     *   curl -X POST URL/api/v1/account/customer/create?token={token}
+     *   curl -X POST URL/api/v1/account/create?token={token}
      *        -H 'Content-Type:application/json'
      *        -d '{
      *              "username": "abcde",
@@ -66,8 +66,8 @@ public class AccountController extends PBController<AccountRepository> {
      *
      * @param token - Token created by firebase authentication system
      * @param newAccount - Account object containing initial fields. Type field is required
-     * @param response
-     * @return
+     * @param response - Does not need to be specified, will be returned automatically, contains cookie
+     * @return - cookie if parameters valid, error if not
      */
     @PostMapping(BASE_URL + "create")
     public ResponseEntity<?> create(
@@ -90,10 +90,23 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * todo
-     * @param token
-     * @param response
-     * @return
+     * Type: POST
+     * Path: /api/v1/account/log-in
+     *
+     * Takes in email and password along with the token returned 
+     * from Firebase's signInWithEmailAndPassword method. If valid token and 
+     * account exists, returns cookie and allows user to log in. Returns error if
+     * no such account is found, or if token invalid
+     * 
+     *
+     * Example:
+     *   curl -X POST URL/api/v1/account/log-in?email={email}&password={password}&token={token}
+     *
+     * @param email - email of user attempting to log in
+     * @param password - password of user attempting to log in
+     * @param token - token from user attempting to log in
+     * @param response - Does not need to be specified, will be returned automatically, contains cookie
+     * @return - cookie if parameters valid, error if not.
      */
     @PostMapping(BASE_URL + "log-in")
     public ResponseEntity<?> login(
@@ -103,6 +116,7 @@ public class AccountController extends PBController<AccountRepository> {
             HttpServletResponse response
     ) {
         try {
+            //create cookie from token, sent back in the HttpServletResponse object
             response.addCookie(authenticator.generateNewSession(token));
             return ResponseEntity.ok(repository.login(email, password));
         } catch (FirebaseAuthException e) {
@@ -115,9 +129,22 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * todo
-     * @param sessionCookieId
-     * @return
+     * Type: POST
+     * Path: /api/v1/account/log-out
+     *
+     * Takes in session cookie and, if valid, clears the user's session
+     * and revokes cookie. If not a valid cookie or has already been revoked, returns error
+     * 
+     *
+     * Example:
+     *   curl -X POST URL/api/v1/account/log-out
+     *        -H '{
+     *              'Content-Type': 'application/json', 
+     *              'Cookie': {sessionCookieId}
+     *             }'
+     *
+     * @param sessionCookieId - user's session cookie ID
+     * @return - String indicating successful logout if cookie valid, else error
      */
     @PostMapping(BASE_URL + "log-out")
     public ResponseEntity<?> logout(
@@ -134,11 +161,32 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * todo
-     * @param email
-     * @param content
-     * @param sessionCookieId
-     * @return
+     * Type: PUT
+     * Path: /api/v1/account/update
+     * Body: new Account object.
+     *
+     * Takes in an account serialized object and an email address and updates
+     * the account linked to the email address with every non-null field in the 
+     * new Account object. Email must be linked to a valid acccount, and cookie must be valid
+     * 
+     * Example:
+     *   curl -X POST URL/api/v1/account/update?token={token}
+     *        -H '{
+     *              'Content-Type':'application/json',
+     *              'Cookie': {sessionCookieId}
+     *            }'
+     *        -d '{
+     *              "username": "abcde",
+     *              "password": "null",
+     *              "email": "email@email.com",
+     *              "type": "CUSTOMER",
+     *                  ...
+     *            }'
+     *
+     * @param email - email of account to be updated
+     * @param content - Account object with updated fields 
+     * @param sessionCookieId - cookie associated with account/session
+     * @return - String indicating successful update, or error message if email not found or bad cookie
      */
     @PutMapping(BASE_URL + "update")
     public ResponseEntity<?> update(
@@ -157,10 +205,24 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * todo
-     * @param email
-     * @param sessionCookieId
-     * @return
+     * Type: GET
+     * Path: /api/v1/account/get
+     *
+     * Takes in account email and session cookie; if both valid, returns account object
+     * associated with that email. Sensitive information such as password and list
+     * of transactions are excluded (set to null) from the returned Account object. 
+     * 
+     *
+     * Example:
+     *   curl -X POST URL/api/v1/account/get?email={email}
+     *        -H '{
+     *              'Content-Type': 'application/json', 
+     *              'Cookie': {sessionCookieId}
+     *             }'
+     *
+     * @param email - email of desired account
+     * @param sessionCookieId - cookie associated with account/session
+     * @return - Account object associated with email parameter. Error if no such account or if bad cookie
      */
     @GetMapping(BASE_URL + "get")
     public ResponseEntity<?> get(
@@ -179,9 +241,17 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * todo
-     * @param username
-     * @return
+     * Type: GET
+     * Path: /api/v1/account/usernameExists
+     *
+     * Takes in username as parameter and checks if an account
+     * with that username already exists. Returns a boolean indicating this. 
+     *
+     * Example:
+     *   curl -X POST URL/api/v1/account/usernameExists?username={username}
+     *
+     * @param username - username we want to check 
+     * @return - boolean indicating existence of such account
      */
     @GetMapping(BASE_URL + "usernameExists")
     public ResponseEntity<?> usernameExists(@RequestParam String username) {
