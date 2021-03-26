@@ -46,7 +46,7 @@ public class AccountController extends PBController<AccountRepository> {
     /**
      * Type: POST
      * Path: /api/v1/account/create
-     * Body: Customer object.
+     * Body: Account object.
      *
      * Takes in an account serialized object and uploads it to the repository.
      * If an account with the username already exists, an error will be returned in the result. If no account type
@@ -66,7 +66,9 @@ public class AccountController extends PBController<AccountRepository> {
      * @param token - Token created by firebase authentication system
      * @param newAccount - Account object containing initial fields. Type field is required
      * @param response - Does not need to be specified, will be returned automatically, contains cookie
-     * @return - cookie if parameters valid, error if not
+     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing a success message.
+     *           If the newAccount parameter is invalid, an HTTP response w/ status 400 BAD REQUEST.
+     *           If the token parameter is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
      */
     @PostMapping(BASE_URL + "create")
     public ResponseEntity<?> create(
@@ -105,7 +107,9 @@ public class AccountController extends PBController<AccountRepository> {
      * @param password - password of user attempting to log in
      * @param token - token from user attempting to log in
      * @param response - Does not need to be specified, will be returned automatically, contains cookie
-     * @return - cookie if parameters valid, error if not.
+     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing a success message.
+     *           If the email or password parameters are invalid, an HTTP response w/ status 400 BAD REQUEST.
+     *           If the token parameter is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
      */
     @PostMapping(BASE_URL + "log-in")
     public ResponseEntity<?> login(
@@ -143,7 +147,8 @@ public class AccountController extends PBController<AccountRepository> {
      *             }'
      *
      * @param sessionCookieId - user's session cookie ID
-     * @return - String indicating successful logout if cookie valid, else error
+     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing a success message.
+     *           If the session ID is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
      */
     @PostMapping(BASE_URL + "log-out")
     public ResponseEntity<?> logout(
@@ -185,7 +190,9 @@ public class AccountController extends PBController<AccountRepository> {
      * @param email - email of account to be updated
      * @param content - Account object with updated fields 
      * @param sessionCookieId - cookie associated with account/session
-     * @return - String indicating successful update, or error message if email not found or bad cookie
+     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing a success message.
+     *           If the email or content parameters are invalid, an HTTP response w/ status 400 BAD REQUEST.
+     *           If the session ID is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
      */
     @PutMapping(BASE_URL + "update")
     public ResponseEntity<?> update(
@@ -221,7 +228,9 @@ public class AccountController extends PBController<AccountRepository> {
      *
      * @param email - email of desired account
      * @param sessionCookieId - cookie associated with account/session
-     * @return - Account object associated with email parameter. Error if no such account or if bad cookie
+     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing the account requested.
+     *           If the email parameter is invalid, an HTTP response w/ status 400 BAD REQUEST.
+     *           If the session ID is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
      */
     @GetMapping(BASE_URL + "get")
     public ResponseEntity<?> get(
@@ -249,7 +258,10 @@ public class AccountController extends PBController<AccountRepository> {
      *   curl -X POST URL/api/v1/account/usernameExists?username={username}
      *
      * @param username - username we want to check 
-     * @return - boolean indicating existence of such account
+     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing true if an account with
+     *           that username exists, false if it doesn't.
+     *           If an internal error occurs, an HTTP response w/ status 500 INTERNAL SERVER ERROR.
+     *           If the session ID is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
      */
     @GetMapping(BASE_URL + "usernameExists")
     public ResponseEntity<?> usernameExists(
@@ -262,7 +274,7 @@ public class AccountController extends PBController<AccountRepository> {
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch (Throwable t) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(t.getMessage());
         }
     }
 }
