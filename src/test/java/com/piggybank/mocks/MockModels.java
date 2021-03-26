@@ -9,21 +9,42 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
 
+/**
+ * todo
+ */
 public abstract class MockModels {
     private static final Random rand = new Random();
 
+    /**
+     * todo
+     * @return
+     */
     public static Customer mockCustomer() {
         return mockAccount(new Customer());
     }
 
+    /**
+     * todo
+     * @return
+     */
     public static Merchant mockMerchant() {
         return mockAccount(new Merchant());
     }
 
+    /**
+     * todo
+     * @return
+     */
     public static Account mockAccount() {
         return mockAccount(new Account());
     }
 
+    /**
+     * todo
+     * @param account
+     * @param <T>
+     * @return
+     */
     private static <T extends Account> T mockAccount(T account) {
         account.setUsername(UUID.randomUUID().toString());
         account.setPassword(UUID.randomUUID().toString());
@@ -35,6 +56,10 @@ public abstract class MockModels {
         return account;
     }
 
+    /**
+     * todo
+     * @return
+     */
     public static BankAccount mockBankAccount() {
         BankAccount account = new BankAccount();
         account.setNameOnAccount(UUID.randomUUID().toString());

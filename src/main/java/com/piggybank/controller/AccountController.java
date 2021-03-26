@@ -13,9 +13,6 @@ import javax.security.auth.message.AuthException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.piggybank.util.Util.ifNonNull;
-
-
 /**
  * Account-related application interface.
  * Base URL: /api/v1/account/
@@ -24,13 +21,13 @@ import static com.piggybank.util.Util.ifNonNull;
 public class AccountController extends PBController<AccountRepository> {
     private static final String BASE_URL = PiggyBankApplication.BASE_URL + "account/";
 
-    /**
-     * Bean initializer constructor.
-     * @param repository - Repository bean for the accounts.
-     */
-    public AccountController(AccountRepository repository, SessionAuthenticator authenticator) {
-        super(repository, authenticator);
-    }
+//    /**
+//     * Bean initializer constructor.
+//     * @param repository - Repository bean for the accounts.
+//     */
+//    public AccountController(AccountRepository repository, SessionAuthenticator authenticator) {
+//        super(repository, authenticator);
+//    }
 
     /**
      * Test mapping.

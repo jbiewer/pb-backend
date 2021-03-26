@@ -2,12 +2,17 @@ package com.piggybank.mocks;
 
 import com.piggybank.model.Account;
 import com.piggybank.repository.AccountRepository;
+import org.springframework.lang.NonNull;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * todo
+ */
 public class MockAccountRepository {
-    public static void reset(AccountRepository repository) {
+
+    public static void reset(@NonNull AccountRepository repository) {
         // test(message)
         when(repository.test(null)).thenReturn("Success! No message supplied");
         when(repository.test(anyString())).thenAnswer(answer -> "Success! Here is your message: " + answer.getArgument(0));
@@ -30,4 +35,5 @@ public class MockAccountRepository {
             when(repository.get(anyString())).thenCallRealMethod();
         } catch (Throwable t) { /* ignore */ }
     }
+
 }

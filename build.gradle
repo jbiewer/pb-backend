@@ -30,6 +30,10 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:3.8.0'
 }
 
+bootRun {
+    environment "GOOGLE_APPLICATION_CREDENTIALS", "secret/pb-backend-pk.json"
+}
+
 /**
  * I don't know how this works yet :(
  */
