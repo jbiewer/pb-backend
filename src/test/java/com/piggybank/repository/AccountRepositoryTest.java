@@ -3,14 +3,11 @@ package com.piggybank.repository;
 import com.piggybank.model.Account;
 import com.piggybank.model.Customer;
 import com.piggybank.model.Merchant;
-import com.piggybank.util.FirebaseEmulatorServices;
-import com.piggybank.mocks.MockModels;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseEntity;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,12 +15,17 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
+import static com.piggybank.mocks.MockModels.*;
+import static com.piggybank.util.FirebaseEmulatorServices.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * todo
+ */
 @SpringBootTest
 public class AccountRepositoryTest {
-    @Autowired
-    private AccountRepository repository;
+
+    @Autowired private AccountRepository repository;
 
     /**
      * todo
@@ -31,7 +33,7 @@ public class AccountRepositoryTest {
     @BeforeEach
     public void beforeEach() throws IOException, URISyntaxException {
         URI uri = Objects.requireNonNull(ClassLoader.getSystemResource("collections")).toURI();
-        FirebaseEmulatorServices.generateFirestoreData(new File(uri));
+        generateFirestoreData(new File(uri));
     }
 
     /**
@@ -39,7 +41,7 @@ public class AccountRepositoryTest {
      */
     @AfterEach
     public void afterEach() throws IOException, InterruptedException {
-        FirebaseEmulatorServices.clearFirestoreDocuments();
+        clearFirestoreDocuments();
     }
 
     /**
@@ -65,7 +67,7 @@ public class AccountRepositoryTest {
      */
     @Test
     public void createAccountWithoutTypeFails() {
-        Account account = MockModels.mockAccount();
+        Account account = mockAccount();
         account.setType(null);
         try {
             repository.create(account);
@@ -82,7 +84,7 @@ public class AccountRepositoryTest {
      */
     @Test
     public void createAccountWithoutEmailFails() {
-        Account account = MockModels.mockCustomer();
+        Account account = mockCustomer();
         account.setEmail(null);
         try {
             repository.create(account);
@@ -100,7 +102,7 @@ public class AccountRepositoryTest {
     @Test
     public void createCustomerSucceeds() {
         try {
-            Customer customer = MockModels.mockCustomer();
+            Customer customer = mockCustomer();
             assertEquals(repository.create(customer), "Account created successfully!");
         } catch (Throwable t) {
             fail(t);
@@ -113,7 +115,7 @@ public class AccountRepositoryTest {
     @Test
     public void createMerchantSucceeds() {
         try {
-            Merchant merchant = MockModels.mockMerchant();
+            Merchant merchant = mockMerchant();
             assertEquals(repository.create(merchant), "Account created successfully!");
         } catch (Throwable t) {
             fail(t);
@@ -125,7 +127,7 @@ public class AccountRepositoryTest {
      */
     @Test
     public void createMerchantWithoutBankAccountFails() {
-        Merchant merchant = MockModels.mockMerchant();
+        Merchant merchant = mockMerchant();
         merchant.setBankAccount(null);
         try {
             repository.create(merchant);
@@ -190,7 +192,7 @@ public class AccountRepositoryTest {
      */
     @Test
     public void updateAccountSucceeds() {
-        Account account = MockModels.mockAccount();
+        Account account = mockAccount();
         Account databaseAccount;
 
         try {
@@ -198,7 +200,7 @@ public class AccountRepositoryTest {
             account.setEmail("user1@email.com");
             assertEquals("Account successfully updated!", repository.update(account.getEmail(), account));
 
-            databaseAccount = FirebaseEmulatorServices.get("Accounts", account.getEmail(), Account.class);
+            databaseAccount = getFromFirestore("Accounts", account.getEmail(), Account.class);
             databaseAccount.setTransactionIds(null);
             assertEquals(account, databaseAccount);
         } catch (Throwable t) {
@@ -211,7 +213,7 @@ public class AccountRepositoryTest {
      */
     @Test
     public void updateAccountSucceedsNewUsername() {
-        Account account = MockModels.mockAccount();
+        Account account = mockAccount();
         Account databaseAccount;
 
         try {
@@ -219,7 +221,7 @@ public class AccountRepositoryTest {
             String email = account.getEmail();
             assertEquals("Account successfully updated!", repository.update("user1@email.com", account));
 
-            databaseAccount = FirebaseEmulatorServices.get("Accounts", email, Account.class);
+            databaseAccount = getFromFirestore("Accounts", email, Account.class);
             databaseAccount.setTransactionIds(null);
             assertEquals(account, databaseAccount);
         } catch (Throwable t) {
@@ -232,7 +234,7 @@ public class AccountRepositoryTest {
      */
     @Test
     public void updateAccountFailsEmailNotFound() {
-        Account account = MockModels.mockCustomer();
+        Account account = mockCustomer();
         try {
             repository.update("user-that-does-not-exist@email.com", account);
         } catch (IllegalArgumentException e) {
@@ -252,7 +254,7 @@ public class AccountRepositoryTest {
             account = repository.get("user1@email.com");
             assertNotNull(account);
 
-            databaseAccount = FirebaseEmulatorServices.get("Accounts", "user1@email.com", Account.class);
+            databaseAccount = getFromFirestore("Accounts", "user1@email.com", Account.class);
             databaseAccount.setTransactionIds(null);
             databaseAccount.setPassword(null);
             assertEquals(account, databaseAccount);

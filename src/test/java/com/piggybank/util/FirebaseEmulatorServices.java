@@ -1,6 +1,7 @@
 package com.piggybank.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -56,16 +57,17 @@ public class FirebaseEmulatorServices {
      * @param modelClass
      * @param <T>
      * @return
-     * @throws ExecutionException
-     * @throws InterruptedException
      */
-    public static <T> T get(String collectionId, String documentId, Class<T> modelClass)
-            throws ExecutionException, InterruptedException {
-        DocumentSnapshot snapshot = FirestoreClient.getFirestore()
+    public static <T> T getFromFirestore(String collectionId, String documentId, Class<T> modelClass) throws Throwable {
+        ApiFuture<DocumentSnapshot> futureSnapshot = FirestoreClient.getFirestore()
                 .collection(collectionId)
                 .document(documentId)
-                .get().get();
-        return snapshot.toObject(modelClass);
+                .get();
+        try {
+            return futureSnapshot.get().toObject(modelClass);
+        } catch (InterruptedException | ExecutionException e) {
+            throw e.getCause();
+        }
     }
 
     /**
@@ -76,6 +78,7 @@ public class FirebaseEmulatorServices {
      */
     public static void printFirestore(OutputStream outputStream) throws ExecutionException, InterruptedException {
         PrintStream printer = new PrintStream(outputStream);
+        printer.println("Printing contents of database...");
         for (CollectionReference collection : FirestoreClient.getFirestore().listCollections()) {
             printer.println(collection.getId() + ":");
             for (DocumentReference document : collection.listDocuments()) {

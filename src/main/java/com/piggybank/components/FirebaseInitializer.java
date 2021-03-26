@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Spring Bean
  *
@@ -32,8 +34,8 @@ public class FirebaseInitializer {
      * to GOOGLE_APPLICATION_CREDENTIALS.
      */
     public FirebaseInitializer(Environment env) throws IOException {
-        String databaseUrl = Objects.requireNonNull(env.getProperty("firebase.database.url"));
-        String serviceAccountId = Objects.requireNonNull(env.getProperty("firebase.service-account-id"));
+        String databaseUrl = requireNonNull(env.getProperty("firebase.database.url"));
+        String serviceAccountId = requireNonNull(env.getProperty("firebase.service-account-id"));
 
         // Initialize the default app if it doesn't exist.
         if (FirebaseApp.getApps().isEmpty()) {
