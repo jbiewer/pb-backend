@@ -7,6 +7,7 @@ import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
+import io.grpc.alts.internal.Identity;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -15,6 +16,10 @@ import org.springframework.stereotype.Repository;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.piggybank.model.Account.AccountType;
 import static com.piggybank.util.Util.*;
@@ -164,21 +169,30 @@ public class AccountRepository extends PBRepository {
      * @return
      * @throws Throwable
      */
-    public Boolean usernameExists(String username) throws Throwable {
+    public boolean usernameExists(String username) throws Throwable {
         ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
+//            Optional<DocumentSnapshot> snapshot = StreamSupport.stream(collection.listDocuments().spliterator(), true)
+//                    .map(document -> {
+//                        try { return document.get().get(); }
+//                        catch (InterruptedException | ExecutionException e) { return null; }
+//                    })
+//                    .filter(Objects::nonNull)
+//                    .filter(snap -> username.equals(snap.get("username")))
+//                    .findFirst();
+//            return snapshot.isPresent();
+
             //get all account documents in db
             ApiFuture<QuerySnapshot> orderFuture = collection.get();
             List<QueryDocumentSnapshot> orderDocuments = orderFuture.get().getDocuments();
             //return true if one of the docs' matches input username
             for(QueryDocumentSnapshot doc: orderDocuments) {
                 if(doc.toObject(Account.class).getUsername().equals(username)) {
-                    return true; 
+                    return true;
                 }
             }
-            return false; 
+            return false;
         });
 
         return getApiFuture(futureTx);
-        
     }
 }

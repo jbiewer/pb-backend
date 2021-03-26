@@ -2,7 +2,6 @@ package com.piggybank.controller;
 
 import com.google.firebase.auth.FirebaseAuthException;
 import com.piggybank.PiggyBankApplication;
-import com.piggybank.components.SessionAuthenticator;
 import com.piggybank.model.Account;
 import com.piggybank.repository.AccountRepository;
 import org.springframework.http.HttpStatus;
@@ -169,8 +168,7 @@ public class AccountController extends PBController<AccountRepository> {
     ) {
         try {
             authenticator.validateSession(sessionCookieId);
-            Account account = repository.get(email);
-            return ResponseEntity.ok(account);
+            return ResponseEntity.ok(repository.get(email));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch (Throwable t) {
@@ -184,10 +182,16 @@ public class AccountController extends PBController<AccountRepository> {
      * @return
      */
     @GetMapping(BASE_URL + "usernameExists")
-    public ResponseEntity<?> usernameExists(@RequestParam String username) {
+    public ResponseEntity<?> usernameExists(
+            @RequestParam String username,
+            @CookieValue(value = "session") String sessionCookieId
+    ) {
         try {
+            authenticator.validateSession(sessionCookieId);
             return ResponseEntity.ok(repository.usernameExists(username));
-        } catch(Throwable t) {
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
+        } catch (Throwable t) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
         }
     }

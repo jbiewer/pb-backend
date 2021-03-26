@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
 
+import static com.piggybank.model.Account.AccountType;
+
 /**
  * todo
  */
@@ -37,6 +39,12 @@ public abstract class MockModels {
      */
     public static Account mockAccount() {
         return mockAccount(new Account());
+    }
+
+    public static Account mockAccount(AccountType type) {
+        Account account = new Account();
+        account.setType(type);
+        return mockAccount(account);
     }
 
     /**
