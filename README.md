@@ -16,6 +16,10 @@
    
 Ex.: `$ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/priv/key.json"`
 
+### Java Requirement
+Java jdk 12 is required. Once downloaded, make an enviorment variable with variable name "JAVA_HOME" and the valie
+as the path to the jdk. Quit any terminal that is runnning, and try building and running again.
+
 ### Session management
 
 Firebase Auth is used to manage session cookies, and the implementations are based on the following tutorial:
