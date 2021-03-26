@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import static com.piggybank.mocks.MockModels.*;
 import static com.piggybank.util.FirebaseEmulatorServices.*;
@@ -31,7 +32,7 @@ public class AccountRepositoryTest {
      * todo
      */
     @BeforeEach
-    public void beforeEach() throws IOException, URISyntaxException {
+    public void beforeEach() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
         URI uri = Objects.requireNonNull(ClassLoader.getSystemResource("collections")).toURI();
         generateFirestoreData(new File(uri));
     }

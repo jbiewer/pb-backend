@@ -9,6 +9,7 @@ import javax.servlet.http.Cookie;
 import java.util.UUID;
 
 import static org.mockito.AdditionalMatchers.not;
+import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.Mockito.*;
 
 /**
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.*;
 public class MockSessionAuthenticator {
     public static final String VALID_SESSION_ID = UUID.randomUUID().toString();
     public static final String VALID_TOKEN_ID = UUID.randomUUID().toString();
+    public static final String EXPIRED_TOKEN_ID = UUID.randomUUID().toString();
 
     public static void reset(@NonNull SessionAuthenticator authenticator) {
         Cookie validSessionCookie = new Cookie("session", VALID_SESSION_ID);
@@ -28,10 +30,12 @@ public class MockSessionAuthenticator {
 
             // generateNewSession
             doReturn(validSessionCookie).when(authenticator).generateNewSession(eq(VALID_TOKEN_ID));
-            doThrow(FirebaseAuthException.class).when(authenticator).generateNewSession(not(eq(VALID_TOKEN_ID)));
+            doThrow(AuthException.class).when(authenticator).generateNewSession(eq(EXPIRED_TOKEN_ID));
+            doThrow(FirebaseAuthException.class).when(authenticator).generateNewSession(not(or(eq(VALID_TOKEN_ID), eq(EXPIRED_TOKEN_ID))));
 
             // clearSessionAndRevoke
-            doNothing().when(authenticator).clearSessionAndRevoke(anyString());
+            doNothing().when(authenticator).clearSessionAndRevoke(eq(VALID_SESSION_ID));
+            doThrow(FirebaseAuthException.class).when(authenticator).clearSessionAndRevoke(not(eq(VALID_SESSION_ID)));
         } catch (FirebaseAuthException | AuthException e) { /* ignore */ }
     }
 

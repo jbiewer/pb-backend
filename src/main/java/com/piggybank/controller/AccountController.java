@@ -21,14 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 public class AccountController extends PBController<AccountRepository> {
     private static final String BASE_URL = PiggyBankApplication.BASE_URL + "account/";
 
-//    /**
-//     * Bean initializer constructor.
-//     * @param repository - Repository bean for the accounts.
-//     */
-//    public AccountController(AccountRepository repository, SessionAuthenticator authenticator) {
-//        super(repository, authenticator);
-//    }
-
     /**
      * Test mapping.
      * Used to see if the account endpoints are reachable.
@@ -133,9 +125,10 @@ public class AccountController extends PBController<AccountRepository> {
     ) {
         try {
             authenticator.clearSessionAndRevoke(sessionCookieId);
-            return ResponseEntity.ok("Logout successful");
+            return ResponseEntity.ok("Logout successful!");
         } catch (FirebaseAuthException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Failed to revoke session (invalid or already revoked)");
         }
 
     }
@@ -186,12 +179,12 @@ public class AccountController extends PBController<AccountRepository> {
     }
 
     /**
-     * 
-     * @param email
+     * todo
+     * @param username
      * @return
      */
     @GetMapping(BASE_URL + "usernameExists")
-    public ResponseEntity<?> emailExists(@RequestParam String username) {
+    public ResponseEntity<?> usernameExists(@RequestParam String username) {
         try {
             return ResponseEntity.ok(repository.usernameExists(username));
         } catch(Throwable t) {
