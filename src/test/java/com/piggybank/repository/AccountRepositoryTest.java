@@ -205,6 +205,7 @@ public class AccountRepositoryTest {
 
             databaseAccount = getFromFirestore("Accounts", account.getEmail(), Account.class);
             databaseAccount.setTransactionIds(null);
+            databaseAccount.setBankAccount(null);
             assertEquals(account, databaseAccount);
         } catch (Exception e) {
             fail(e);
@@ -226,6 +227,7 @@ public class AccountRepositoryTest {
 
             databaseAccount = getFromFirestore("Accounts", email, Account.class);
             databaseAccount.setTransactionIds(null);
+            databaseAccount.setBankAccount(null);
             assertEquals(account, databaseAccount);
         } catch (Exception e) {
             fail(e);

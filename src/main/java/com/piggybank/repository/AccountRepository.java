@@ -134,15 +134,17 @@ public class AccountRepository extends PBRepository {
                 }
             }
 
-            // Change other fields if requested, except for transaction IDs.
+            // Change other fields if requested, except for transaction IDs and bank account.
             DocumentReference document = collection.document(currentEmail);
             content.setTransactionIds(null);
+            content.setBankAccount(null);
             for (Field declaredField : Account.class.getDeclaredFields()) {
+                boolean accessible = declaredField.canAccess(content);
                 declaredField.setAccessible(true);
                 ifNonNull(declaredField.get(content)).then(value ->
                     tx.update(document, declaredField.getName(), value)
                 );
-                declaredField.setAccessible(false);
+                declaredField.setAccessible(accessible);
             }
             return "Account successfully updated!";
         });

@@ -42,11 +42,6 @@
     "type": "CUSTOMER",
     "profilePictureUrl": "/path/to/jacobs/pic.jpg",
     "balance": 0.01,
-    "bankAccount": {
-      "accountNumber": 13579,
-      "routingNumber": 24680,
-      "nameOnAccount": "Jacob Biewer"
-    },
     "transactionIds": [
       "tx-id6",
       "tx-id7",

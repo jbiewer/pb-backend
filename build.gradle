@@ -75,6 +75,8 @@ task stopFirebaseEmulators(type: Task) {
 test {
     dependsOn startFirebaseEmulators
     finalizedBy stopFirebaseEmulators
+
+    maxParallelForks 1
     useJUnitPlatform()
     environment "GCLOUD_PROJECT", "piggybank-104d3"
     environment "FIRESTORE_EMULATOR_HOST", "localhost:9001"
