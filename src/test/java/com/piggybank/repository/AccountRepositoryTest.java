@@ -268,18 +268,6 @@ public class AccountRepositoryTest {
      * todo
      */
     @Test
-    public void getReturnsAccountObject() {
-        try {
-            assertEquals(repository.get("user1@email.com").getClass(), Account.class); 
-        } catch(Throwable t) {
-            fail(t);
-        }
-    }
-
-    /**
-     * todo
-     */
-    @Test
     public void getDoesNotReturnSensitiveInfo() {
         try {
             assertNull(repository.get("user1@email.com").getPassword());
@@ -316,5 +304,3 @@ public class AccountRepositoryTest {
         }
     }
 }
-
-
