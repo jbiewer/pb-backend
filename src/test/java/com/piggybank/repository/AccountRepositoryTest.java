@@ -21,7 +21,9 @@ import static com.piggybank.util.FirebaseEmulatorServices.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * todo
+ * Unit-testing suite for the AccountRepository.
+ * After starting a spring application, injects the AccountRepository bean as a dependency to be used
+ * for running unit tests on.
  */
 @SpringBootTest
 public class AccountRepositoryTest {
@@ -29,7 +31,7 @@ public class AccountRepositoryTest {
     @Autowired private AccountRepository repository;
 
     /**
-     * todo
+     * Load the fake documents into Firestore before each test.
      */
     @BeforeEach
     public void beforeEach() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
@@ -38,7 +40,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * Clear the fake documents from Firestore after each test.
      */
     @AfterEach
     public void afterEach() throws IOException, InterruptedException {
@@ -46,7 +48,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The test() method succeeds given no message (message is null).
      */
     @Test
     public void testWithoutMessageSucceeds() {
@@ -55,7 +57,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The test() method succeeds given a message.
      */
     @Test
     public void testWithMessageSucceeds() {
@@ -64,7 +66,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The create() method fails because no type is specified.
      */
     @Test
     public void createAccountWithoutTypeFails() {
@@ -81,7 +83,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The create() method fails because no email is specified.
      */
     @Test
     public void createAccountWithoutEmailFails() {
@@ -98,7 +100,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The create() method succeeds given mock customer data.
      */
     @Test
     public void createCustomerSucceeds() {
@@ -111,7 +113,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The create() method succeeds given mock merchant data.
      */
     @Test
     public void createMerchantSucceeds() {
@@ -124,7 +126,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The create() method fails given mock merchant data w/out bank account specified.
      */
     @Test
     public void createMerchantWithoutBankAccountFails() {
@@ -141,7 +143,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The login() method succeeds given valid email/password credentials.
      */
     @Test
     public void loginSucceeds() {
@@ -155,7 +157,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The login() method fails given an invalid email (email not found).
      */
     @Test
     public void loginFailsEmailNotFound() {
@@ -172,7 +174,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The login() method fails given an invalid password (password doesn't match one found in Firestore).
      */
     @Test
     public void loginFailsPasswordMismatch() {
@@ -189,7 +191,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The update() method succeeds given a valid email w/ corresponding mock account data.
      */
     @Test
     public void updateAccountSucceeds() {
@@ -210,10 +212,10 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The update() method succeeds given a valid email w/ corresponding mock account data and a new email.
      */
     @Test
-    public void updateAccountSucceedsNewUsername() {
+    public void updateAccountSucceedsNewEmail() {
         Account account = mockAccount();
         Account databaseAccount;
 
@@ -231,7 +233,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The update() method fails given an invalid email (email not found).
      */
     @Test
     public void updateAccountFailsEmailNotFound() {
@@ -246,7 +248,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The get() method succeeds given a valid email.
      */
     @Test
     public void getSucceeds() {
@@ -265,19 +267,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
-     */
-    @Test
-    public void getReturnsAccountObject() {
-        try {
-            assertEquals(repository.get("user1@email.com").getClass(), Account.class); 
-        } catch(Exception e) {
-            fail();
-        }
-    }
-
-    /**
-     * todo
+     * The get() method succeeds and doesn't return sensitive info.
      */
     @Test
     public void getDoesNotReturnSensitiveInfo() {
@@ -289,7 +279,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The get() method fails given an invalid email (email not found).
      */
     @Test
     public void getFailsEmailNotFound() {
@@ -304,7 +294,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The usernameExists() method returns true given a valid username and false given an invalid username.
      */
     @Test
     public void usernameExistsSucceeds() {
@@ -316,5 +306,3 @@ public class AccountRepositoryTest {
         }
     }
 }
-
-

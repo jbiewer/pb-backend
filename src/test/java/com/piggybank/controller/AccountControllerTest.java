@@ -36,6 +36,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Unit-testing suite for all endpoints in the AccountController class.
+ * Runs a spring application and uses a mock MVC provided by Spring to make mock HTTP requests to the controller
+ * endpoints. Mockito is used to inject mock objects to be used in the application context.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 public class AccountControllerTest {
@@ -56,7 +61,14 @@ public class AccountControllerTest {
 
     @Autowired private MockMvc mvc;
 
-    public String jsonOf(Object object) throws JsonProcessingException {
+    /**
+     * Given an object, serializes it into a JSON string.
+     *
+     * @param object Object to serialize.
+     * @return JSON string formatted version of the object.
+     * @throws JsonProcessingException When an exception occurs trying to serialize the object.
+     */
+    private String jsonOf(Object object) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(object);
     }
 
