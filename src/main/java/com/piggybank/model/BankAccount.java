@@ -3,7 +3,7 @@ package com.piggybank.model;
 import java.util.Objects;
 
 /**
- * todo
+ * Model to represent an account's bank account.
  */
 public class BankAccount {
     private long accountNumber;

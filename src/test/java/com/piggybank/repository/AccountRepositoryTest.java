@@ -21,7 +21,9 @@ import static com.piggybank.util.FirebaseEmulatorServices.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * todo
+ * Unit-testing suite for the AccountRepository.
+ * After starting a spring application, injects the AccountRepository bean as a dependency to be used
+ * for running unit tests on.
  */
 @SpringBootTest
 public class AccountRepositoryTest {
@@ -29,16 +31,16 @@ public class AccountRepositoryTest {
     @Autowired private AccountRepository repository;
 
     /**
-     * todo
+     * Load the fake documents into Firestore before each test.
      */
     @BeforeEach
     public void beforeEach() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
         URI uri = Objects.requireNonNull(ClassLoader.getSystemResource("collections")).toURI();
-        generateFirestoreData(new File(uri));
+        loadFirestoreDocuments(new File(uri));
     }
 
     /**
-     * todo
+     * Clear the fake documents from Firestore after each test.
      */
     @AfterEach
     public void afterEach() throws IOException, InterruptedException {
@@ -46,7 +48,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The test() method succeeds given no message (message is null).
      */
     @Test
     public void testWithoutMessageSucceeds() {
@@ -55,7 +57,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The test() method succeeds given a message.
      */
     @Test
     public void testWithMessageSucceeds() {
@@ -64,7 +66,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The create() method fails because no type is specified.
      */
     @Test
     public void createAccountWithoutTypeFails() {
@@ -75,13 +77,13 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for no account type");
         } catch (IllegalArgumentException e) {
             assertEquals("Must specify account type", e.getMessage());
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The create() method fails because no email is specified.
      */
     @Test
     public void createAccountWithoutEmailFails() {
@@ -92,39 +94,39 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for no account email");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Must specify account email");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The create() method succeeds given mock customer data.
      */
     @Test
     public void createCustomerSucceeds() {
         try {
             Customer customer = mockCustomer();
             assertEquals(repository.create(customer), "Account created successfully!");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The create() method succeeds given mock merchant data.
      */
     @Test
     public void createMerchantSucceeds() {
         try {
             Merchant merchant = mockMerchant();
             assertEquals(repository.create(merchant), "Account created successfully!");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The create() method fails given mock merchant data w/out bank account specified.
      */
     @Test
     public void createMerchantWithoutBankAccountFails() {
@@ -135,13 +137,13 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for no bank account");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Merchant account must have a bank account");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The login() method succeeds given valid email/password credentials.
      */
     @Test
     public void loginSucceeds() {
@@ -149,13 +151,13 @@ public class AccountRepositoryTest {
         String password = "user1-pw";
         try {
             assertEquals("Login successful!", repository.login(email, password));
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The login() method fails given an invalid email (email not found).
      */
     @Test
     public void loginFailsEmailNotFound() {
@@ -172,7 +174,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The login() method fails given an invalid password (password doesn't match one found in Firestore).
      */
     @Test
     public void loginFailsPasswordMismatch() {
@@ -189,7 +191,7 @@ public class AccountRepositoryTest {
     }
 
     /**
-     * todo
+     * The update() method succeeds given a valid email w/ corresponding mock account data.
      */
     @Test
     public void updateAccountSucceeds() {
@@ -204,16 +206,16 @@ public class AccountRepositoryTest {
             databaseAccount = getFromFirestore("Accounts", account.getEmail(), Account.class);
             databaseAccount.setTransactionIds(null);
             assertEquals(account, databaseAccount);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The update() method succeeds given a valid email w/ corresponding mock account data and a new email.
      */
     @Test
-    public void updateAccountSucceedsNewUsername() {
+    public void updateAccountSucceedsNewEmail() {
         Account account = mockAccount();
         Account databaseAccount;
 
@@ -225,13 +227,13 @@ public class AccountRepositoryTest {
             databaseAccount = getFromFirestore("Accounts", email, Account.class);
             databaseAccount.setTransactionIds(null);
             assertEquals(account, databaseAccount);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The update() method fails given an invalid email (email not found).
      */
     @Test
     public void updateAccountFailsEmailNotFound() {
@@ -240,13 +242,13 @@ public class AccountRepositoryTest {
             repository.update("user-that-does-not-exist@email.com", account);
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The get() method succeeds given a valid email.
      */
     @Test
     public void getSucceeds() {
@@ -259,25 +261,25 @@ public class AccountRepositoryTest {
             databaseAccount.setTransactionIds(null);
             databaseAccount.setPassword(null);
             assertEquals(account, databaseAccount);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The get() method succeeds and doesn't return sensitive info.
      */
     @Test
     public void getDoesNotReturnSensitiveInfo() {
         try {
             assertNull(repository.get("user1@email.com").getPassword());
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The get() method fails given an invalid email (email not found).
      */
     @Test
     public void getFailsEmailNotFound() {
@@ -286,21 +288,21 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for email not found");
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail(e);
         }
     }
 
     /**
-     * todo
+     * The usernameExists() method returns true given a valid username and false given an invalid username.
      */
     @Test
     public void usernameExistsSucceeds() {
         try {
             assertTrue(repository.usernameExists("user1"));
             assertFalse(repository.usernameExists("nonexistent-user"));
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail(e);
         }
     }
 }

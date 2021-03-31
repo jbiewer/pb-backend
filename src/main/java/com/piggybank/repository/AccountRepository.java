@@ -7,7 +7,6 @@ import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
-import io.grpc.alts.internal.Identity;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -18,11 +17,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.piggybank.model.Account.AccountType;
-import static com.piggybank.util.Util.*;
+import static com.piggybank.util.Util.ifNonNull;
+import static com.piggybank.util.Util.ifNull;
 
 /**
  * Interface for database interactions for accounts.
@@ -43,7 +42,7 @@ public class AccountRepository extends PBRepository {
     /**
      * Tests the AccountController interface.
      *
-     * @return Result of query.
+     * @return Success message.
      */
     @NonNull
     public String test(@Nullable String message) {
@@ -53,13 +52,17 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * Creates new account if one not found with same email. 
-     * Fields set according to Account object parameter
-     * 
-     * @param newAccount - Account object representing the new account
-     * @return todo
+     * Creates a new account in Firestore if one with the specified email doesn't already exist.
+     * Using the fields from the 'newAccount' parameter, a document is created in Firestore labelled with the
+     * email in 'newAccount'.
+     *
+     * @param newAccount Account object representing the new account in Firestore.
+     * @return Message indicating success.
+     * @throws IllegalArgumentException When the account type, email, or password fields are not specified,
+     *                                  or if the account type is MERCHANT but the bank account is not specified.
+     * @throws Exception For any internal error.
      */
-    public String create(@NonNull Account newAccount) throws Throwable {
+    public String create(@NonNull Account newAccount) throws Exception {
         ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type"));
         if (newAccount.getType() == AccountType.MERCHANT) {
             ifNull(newAccount.getBankAccount()).thenThrow(new IllegalArgumentException("Merchant account must have a bank account"));
@@ -73,13 +76,18 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * todo
-     * @param email
-     * @param password
-     * @return
-     * @throws Throwable
+     * Given an email and password, finds the account via the email and then verifies that the password passed in
+     * matches the password that currently exists in Firestore. If an account is found and the passwords match,
+     * the login is successful.
+     *
+     * @param email Email of an existing account.
+     * @param password Password of the existing account to match against.
+     * @return Success string if the password matches the account found in Firestore.
+     * @throws IllegalArgumentException When either an account with the email doesn't exist or the password doesn't
+     *                                  match the one found in Firestore.
+     * @throws Exception When an unexpected exception occurs.
      */
-    public String login(@NonNull String email, @NonNull String password) throws Throwable {
+    public String login(@NonNull String email, @NonNull String password) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             // Confirm account exists.
             DocumentSnapshot snapshot = tx.get(collection.document(email)).get();
@@ -104,11 +112,13 @@ public class AccountRepository extends PBRepository {
      * object parameter are not null, the fields of the account associated with the email parameter
      * are updated
      * 
-     * @param email - username of account to update
-     * @param content - object containing fields that need updating
-     * @return todo
+     * @param email Email of account to update.
+     * @param content Account object containing fields that are used to update the account in Firestore.
+     * @return A success message indicating the account was updated.
+     * @throws IllegalArgumentException When an account with the email doesn't exist.
+     * @throws Exception When an unexpected exception occurs.
      */
-    public String update(@NonNull String email, @NonNull Account content) throws Throwable {
+    public String update(@NonNull String email, @NonNull Account content) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             String currentEmail = email;
 
@@ -134,7 +144,6 @@ public class AccountRepository extends PBRepository {
                 );
                 declaredField.setAccessible(false);
             }
-
             return "Account successfully updated!";
         });
 
@@ -143,12 +152,14 @@ public class AccountRepository extends PBRepository {
 
     /**
      * Get the account info associated with the given email. 
-     * Should not send back sensitive information
+     * Doesn't send back sensitive information.
      * 
-     * @param email - email linked to the account of interest
-     * @return todo
+     * @param email Email linked to the account to retrieve.
+     * @return The account object linked to the email.
+     * @throws IllegalArgumentException When an account with the email doesn't exist.
+     * @throws Exception When an unexpected exception occurs.
      */
-    public Account get(String email) throws Throwable {
+    public Account get(String email) throws Exception {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(collection.document(email)).get();
             if (snapshot.exists()) {
@@ -164,33 +175,38 @@ public class AccountRepository extends PBRepository {
 
     
     /**
+     * Given a username, determines if an account with that username exists.
+     * Because the account documents in Firestore are labelled by the account's email, this method is useful
+     * to determine if an account containing the username exists without having to specify the account's email.
      * 
-     * @param username
-     * @return
-     * @throws Throwable
+     * @param username Username possibly linked to an account.
+     * @return True if an account with that username exists, false otherwise.
+     * @throws Exception When an unexpected exception occurs.
      */
-    public boolean usernameExists(String username) throws Throwable {
+    public boolean usernameExists(String username) throws Exception {
         ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
-//            Optional<DocumentSnapshot> snapshot = StreamSupport.stream(collection.listDocuments().spliterator(), true)
-//                    .map(document -> {
-//                        try { return document.get().get(); }
-//                        catch (InterruptedException | ExecutionException e) { return null; }
-//                    })
-//                    .filter(Objects::nonNull)
-//                    .filter(snap -> username.equals(snap.get("username")))
-//                    .findFirst();
-//            return snapshot.isPresent();
+            // Using a parallel stream, check if any document has the username specified.
+            return StreamSupport.stream(collection.listDocuments().spliterator(), true)
+                    .map(document -> {
+                        try {
+                            return document.get().get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .anyMatch(snap -> username.equals(snap.get("username")));
 
-            //get all account documents in db
-            ApiFuture<QuerySnapshot> orderFuture = collection.get();
-            List<QueryDocumentSnapshot> orderDocuments = orderFuture.get().getDocuments();
+            //get all account documents in db todo
+//            ApiFuture<QuerySnapshot> orderFuture = collection.get();
+//            List<QueryDocumentSnapshot> orderDocuments = orderFuture.get().getDocuments();
             //return true if one of the docs' matches input username
-            for(QueryDocumentSnapshot doc: orderDocuments) {
-                if(doc.toObject(Account.class).getUsername().equals(username)) {
-                    return true;
-                }
-            }
-            return false;
+//            for (QueryDocumentSnapshot doc: orderDocuments) {
+//                if (doc.toObject(Account.class).getUsername().equals(username)) {
+//                    return true;
+//                }
+//            }
+//            return false;
         });
 
         return getApiFuture(futureTx);
