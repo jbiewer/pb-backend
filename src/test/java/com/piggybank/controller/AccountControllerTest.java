@@ -2,9 +2,8 @@ package com.piggybank.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.piggybank.components.SessionAuthenticator;
-import com.piggybank.mocks.MockAccountRepository;
-import com.piggybank.mocks.MockSessionAuthenticator;
 import com.piggybank.model.Account;
 import com.piggybank.repository.AccountRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -18,21 +17,20 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import javax.security.auth.message.AuthException;
 import javax.servlet.http.Cookie;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static com.piggybank.mocks.MockAccountRepository.*;
 import static com.piggybank.mocks.MockModels.mockAccount;
-import static com.piggybank.mocks.MockSessionAuthenticator.*;
 import static com.piggybank.model.Account.AccountType;
 import static com.piggybank.util.FirebaseEmulatorServices.*;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -41,14 +39,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 public class AccountControllerTest {
+    private static final String CUSTOMER_EMAIL = "user1@email.com";
+    private static final String CUSTOMER_USERNAME = "user1";
+    private static final String CUSTOMER_PASSWORD = "user1-pw";
 
-    @MockBean
-    private AccountRepository repository;
-    @MockBean
-    private SessionAuthenticator authenticator;
+    private static final String VALID_SESSION_ID = UUID.randomUUID().toString();
+    private static final String INVALID_SESSION_ID = UUID.randomUUID().toString();
+    private static final String VALID_TOKEN_ID = UUID.randomUUID().toString();
+    private static final String INVALID_TOKEN_ID = UUID.randomUUID().toString();
+    private static final String EXPIRED_TOKEN_ID = UUID.randomUUID().toString();
+    private static final Cookie VALID_SESSION_COOKIE = new Cookie("session", VALID_SESSION_ID);
+    private static final Cookie INVALID_SESSION_COOKIE = new Cookie("session", INVALID_SESSION_ID);
 
-    @Autowired
-    private MockMvc mvc;
+    @MockBean private AccountRepository repository;
+    @MockBean private SessionAuthenticator authenticator;
+
+    @Autowired private MockMvc mvc;
 
     public String jsonOf(Object object) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(object);
@@ -60,10 +66,7 @@ public class AccountControllerTest {
     @BeforeEach
     public void beforeEach() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
         URI uri = requireNonNull(ClassLoader.getSystemResource("collections")).toURI();
-        generateFirestoreData(new File(uri));
-
-        MockAccountRepository.reset(repository);
-        MockSessionAuthenticator.reset(authenticator);
+        loadFirestoreDocuments(new File(uri));
     }
 
     /**
@@ -78,466 +81,583 @@ public class AccountControllerTest {
      * todo
      */
     @Test
-    public void testSucceedsWithoutMessage() {
+    public void testSucceedsWithoutMessage() throws FirebaseAuthException {
+        // Mock
+        when(repository.test(isNull())).thenReturn("Success! No message supplied");
+
+        // Test
         try {
             mvc.perform(get("/api/v1/account/test"))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Success! No message supplied"));
-            verify(repository, times(1)).test(null);
-            verify(authenticator, never()).validateSession(any());
         } catch (Exception e) {
             fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).test(isNull());
+        verify(authenticator, never()).validateSession(any());
     }
 
     /**
      * todo
      */
     @Test
-    public void testSucceedsWithMessage() {
+    public void testSucceedsWithMessage() throws FirebaseAuthException {
+        // Mock
+        when(repository.test("test")).thenReturn("Success! Here is your message: test");
+
+        // Test
         try {
             mvc.perform(get("/api/v1/account/test").content("test"))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Success! Here is your message: test"));
-
-            verify(repository, times(1)).test(anyString());
-            verify(authenticator, never()).validateSession(any());
         } catch (Exception e) {
             fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).test("test");
+        verify(authenticator, never()).validateSession(any());
     }
 
     /**
      * todo
      */
     @Test
-    public void testSucceedsWithValidSession() {
+    public void testSucceedsWithValidSession() throws FirebaseAuthException {
+        // Mock
+        when(repository.test(isNull())).thenReturn("Success! No message supplied");
+
+        // Test
         try {
-            mvc.perform(get("/api/v1/account/test").cookie(new Cookie("session", VALID_SESSION_ID)))
+            mvc.perform(get("/api/v1/account/test").cookie(VALID_SESSION_COOKIE))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Success! No message supplied"));
-
-            verify(repository, times(1)).test(null);
-            verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
         } catch (Exception e) {
             fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).test(isNull());
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void testFailsWithInvalidSession() {
-        String sessionCookieId = "not-valid";
+    public void testFailsWithInvalidSession() throws FirebaseAuthException {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+
+        // Test
         try {
-            mvc.perform(get("/api/v1/account/test").cookie(new Cookie("session", sessionCookieId)))
+            mvc.perform(get("/api/v1/account/test").cookie(INVALID_SESSION_COOKIE))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
-
-            verify(repository, never()).test(any());
-            verify(authenticator, times(1)).validateSession(sessionCookieId);
         } catch (Exception e) {
             fail(e);
         }
+
+        // Verify
+        verify(repository, never()).test(any());
+        verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void createSucceeds() {
+    public void createSucceeds() throws Exception {
+        Account account = getFromFirestore("Accounts", CUSTOMER_EMAIL, Account.class);
+
+        // Mock
+        doReturn(VALID_SESSION_COOKIE).when(authenticator).generateNewSession(VALID_TOKEN_ID);
+        when(repository.create(account)).thenReturn("Account created successfully!");
+
+        // Test
         MockHttpServletRequestBuilder request = post("/api/v1/account/create")
                 .param("token", VALID_TOKEN_ID)
                 .contentType(MediaType.APPLICATION_JSON);
-
         try {
-            Account account = getFromFirestore("Accounts", VALID_CUSTOMER_EMAIL, Account.class);
             mvc.perform(request.content(jsonOf(account)))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Account created successfully!"));
-
-            verify(repository, times(1)).create(any());
-            verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).create(account);
+        verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void createFailsInvalidToken() {
-        String invalidTokenId = "invalid-token-id";
-        MockHttpServletRequestBuilder request = post("/api/v1/account/create")
-                .param("token", invalidTokenId)
-                .contentType(MediaType.APPLICATION_JSON);
+    public void createFailsInvalidToken() throws Exception {
+        Account account = getFromFirestore("Accounts", CUSTOMER_EMAIL, Account.class);
 
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).generateNewSession(INVALID_TOKEN_ID);
+
+        // Test
+        MockHttpServletRequestBuilder request = post("/api/v1/account/create")
+                .param("token", INVALID_TOKEN_ID)
+                .contentType(MediaType.APPLICATION_JSON);
         try {
-            Account account = getFromFirestore("Accounts", VALID_CUSTOMER_EMAIL, Account.class);
             mvc.perform(request.content(jsonOf(account)))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to create a session"));
-
-            verify(repository, never()).create(any());
-            verify(authenticator, times(1)).generateNewSession(invalidTokenId);
-        } catch (Throwable t) {
+        } catch (Exception t) {
             fail(t);
         }
+
+        // Verify
+        verify(repository, never()).create(any());
+        verify(authenticator, times(1)).generateNewSession(INVALID_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void createFailsExpiredToken() {
+    public void createFailsExpiredToken() throws Exception {
+        Account account = getFromFirestore("Accounts", CUSTOMER_EMAIL, Account.class);
+
+        // Mock
+        doThrow(AuthException.class).when(authenticator).generateNewSession(EXPIRED_TOKEN_ID);
+
+        // Test
         MockHttpServletRequestBuilder request = post("/api/v1/account/create")
                 .param("token", EXPIRED_TOKEN_ID)
                 .contentType(MediaType.APPLICATION_JSON);
-
         try {
-            Account account = getFromFirestore("Accounts", "user1@email.com", Account.class);
             mvc.perform(request.content(jsonOf(account)))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Recent sign in required"));
-
-            verify(repository, never()).create(any());
-            verify(authenticator, times(1)).generateNewSession(EXPIRED_TOKEN_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, never()).create(any());
+        verify(authenticator, times(1)).generateNewSession(EXPIRED_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void createFailsMissingField() {
+    public void createFailsMissingField() throws Exception {
+        Account account = getFromFirestore("Accounts", "user2@email.com", Account.class);
+        account.setType(null);
+
+        // Mock
+        doReturn(VALID_SESSION_COOKIE).when(authenticator).generateNewSession(VALID_TOKEN_ID);
+        when(repository.create(argThat(acct -> acct.getType() == null))).thenThrow(IllegalArgumentException.class);
+
+        // Test
         MockHttpServletRequestBuilder request = post("/api/v1/account/create")
                 .param("token", VALID_TOKEN_ID)
                 .contentType(MediaType.APPLICATION_JSON);
-
         try {
-            Account account = getFromFirestore("Accounts", "user2@email.com", Account.class);
-            account.setType(null);
-            account.setBankAccount(null);
-            account.setEmail(null);
-            account.setPassword(null);
             mvc.perform(request.content(jsonOf(account))).andExpect(status().isBadRequest());
-
-            verify(repository, times(1)).create(account);
-            verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).create(account);
+        verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void loginSucceeds() {
-        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .param("password", VALID_CUSTOMER_PASSWORD)
-                .param("token", VALID_TOKEN_ID);
+    public void loginSucceeds() throws Exception {
+        // Mock
+        doReturn(VALID_SESSION_COOKIE).when(authenticator).generateNewSession(VALID_TOKEN_ID);
+        when(repository.login(CUSTOMER_EMAIL, CUSTOMER_PASSWORD)).thenReturn("Login successful!");
 
+        // Test
+        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
+                .param("email", CUSTOMER_EMAIL)
+                .param("password", CUSTOMER_PASSWORD)
+                .param("token", VALID_TOKEN_ID);
         try {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(content().string("Login successful!"));
-
-            verify(repository, times(1)).login(VALID_CUSTOMER_EMAIL, VALID_CUSTOMER_PASSWORD);
-            verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).login(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+        verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void loginFailsInvalidToken() {
-        String invalidTokenId = "invalid-token-id";
-        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .param("password", VALID_CUSTOMER_PASSWORD)
-                .param("token", invalidTokenId);
+    public void loginFailsInvalidToken() throws Exception {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).generateNewSession(INVALID_TOKEN_ID);
 
+        // Test
+        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
+                .param("email", CUSTOMER_EMAIL)
+                .param("password", CUSTOMER_PASSWORD)
+                .param("token", INVALID_TOKEN_ID);
         try {
             mvc.perform(request)
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to create a session"));
-
-            verify(repository, never()).login(any(), any());
-            verify(authenticator, times(1)).generateNewSession(invalidTokenId);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, never()).login(any(), any());
+        verify(authenticator, times(1)).generateNewSession(INVALID_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void loginFailsExpiredToken() {
-        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .param("password", VALID_CUSTOMER_PASSWORD)
-                .param("token", EXPIRED_TOKEN_ID);
+    public void loginFailsExpiredToken() throws Exception {
+        // Mock
+        doThrow(AuthException.class).when(authenticator).generateNewSession(EXPIRED_TOKEN_ID);
 
+        // Test
+        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
+                .param("email", CUSTOMER_EMAIL)
+                .param("password", CUSTOMER_PASSWORD)
+                .param("token", EXPIRED_TOKEN_ID);
         try {
             mvc.perform(request)
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Recent sign in required"));
-
-            verify(repository, never()).login(any(), any());
-            verify(authenticator, times(1)).generateNewSession(EXPIRED_TOKEN_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
 
+        // Verify
+        verify(repository, never()).login(any(), any());
+        verify(authenticator, times(1)).generateNewSession(EXPIRED_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void loginFailsInvalidCredentials() {
-        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
-                .param("email", "non-existent-email")
-                .param("password", "non-existent-password")
-                .param("token", VALID_TOKEN_ID);
+    public void loginFailsInvalidCredentials() throws Exception {
+        String fakeEmail = "non-existent-email";
+        String fakePassword = "non-existent-password";
 
+        // Mock
+        doReturn(VALID_SESSION_COOKIE).when(authenticator).generateNewSession(VALID_TOKEN_ID);
+        when(repository.login(fakeEmail, fakePassword))
+                .thenThrow(IllegalArgumentException.class);
+
+        // Test
+        MockHttpServletRequestBuilder request = post("/api/v1/account/log-in")
+                .param("email", fakeEmail)
+                .param("password", fakePassword)
+                .param("token", VALID_TOKEN_ID);
         try {
             mvc.perform(request).andExpect(status().isBadRequest());
-
-            verify(repository, times(1)).login("non-existent-email", "non-existent-password");
-            verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).login(fakeEmail, fakePassword);
+        verify(authenticator, times(1)).generateNewSession(VALID_TOKEN_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void logoutSucceeds() {
+    public void logoutSucceeds() throws FirebaseAuthException {
+        // Test
         MockHttpServletRequestBuilder request = post("/api/v1/account/log-out")
-                .cookie(new Cookie("session", VALID_SESSION_ID));
-
+                .cookie(VALID_SESSION_COOKIE);
         try {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(content().string("Logout successful!"));
-
-            verify(authenticator, times(1)).clearSessionAndRevoke(VALID_SESSION_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(authenticator, times(1)).clearSessionAndRevoke(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void logoutFailsInvalidSession() {
-        String invalidSessionId = "invalid-session-id";
-        MockHttpServletRequestBuilder request = post("/api/v1/account/log-out")
-                .cookie(new Cookie("session", invalidSessionId));
+    public void logoutFailsInvalidSession() throws FirebaseAuthException {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).clearSessionAndRevoke(INVALID_SESSION_ID);
 
+        // Test
         try {
-            mvc.perform(request)
+            mvc.perform(post("/api/v1/account/log-out").cookie(INVALID_SESSION_COOKIE))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to revoke session (invalid or already revoked)"));
-
-            verify(authenticator, times(1)).clearSessionAndRevoke(invalidSessionId);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(authenticator, times(1)).clearSessionAndRevoke(INVALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void updateSucceeds() {
-        MockHttpServletRequestBuilder request = put("/api/v1/account/update")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .cookie(new Cookie("session", VALID_SESSION_ID))
-                .contentType(MediaType.APPLICATION_JSON);
+    public void updateSucceeds() throws Exception {
+        Account account = mockAccount(AccountType.CUSTOMER);
+        account.setEmail(CUSTOMER_EMAIL);
 
+        // Mock
+        doNothing().when(authenticator).validateSession(VALID_SESSION_ID);
+        when(repository.update(CUSTOMER_EMAIL, account)).thenReturn("Account successfully updated!");
+
+        // Test
+        MockHttpServletRequestBuilder request = put("/api/v1/account/update")
+                .param("email", CUSTOMER_EMAIL)
+                .cookie(VALID_SESSION_COOKIE)
+                .contentType(MediaType.APPLICATION_JSON);
         try {
-            Account account = mockAccount(AccountType.CUSTOMER);
-            account.setEmail(VALID_CUSTOMER_EMAIL);
             mvc.perform(request.content(jsonOf(account)))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Account successfully updated!"));
-
-            verify(repository, times(1)).update(VALID_CUSTOMER_EMAIL, account);
-            verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).update(CUSTOMER_EMAIL, account);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void updateFailsInvalidSession() {
-        String invalidSessionId = "invalid-session-id";
-        MockHttpServletRequestBuilder request = put("/api/v1/account/update")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .cookie(new Cookie("session", invalidSessionId))
-                .contentType(MediaType.APPLICATION_JSON);
+    public void updateFailsInvalidSession() throws Exception {
+        Account account = mockAccount(AccountType.CUSTOMER);
+        account.setEmail(CUSTOMER_EMAIL);
 
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+
+        // Test
+        MockHttpServletRequestBuilder request = put("/api/v1/account/update")
+                .param("email", CUSTOMER_EMAIL)
+                .cookie(INVALID_SESSION_COOKIE)
+                .contentType(MediaType.APPLICATION_JSON);
         try {
-            Account account = mockAccount(AccountType.CUSTOMER);
-            account.setEmail(VALID_CUSTOMER_EMAIL);
             mvc.perform(request.content(jsonOf(account)))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
-
-            verify(repository, never()).update(any(), any());
-            verify(authenticator, times(1)).validateSession(invalidSessionId);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, never()).update(any(), any());
+        verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void updateFailsEmailNotFound() {
+    public void updateFailsEmailNotFound() throws Exception {
         String invalidEmail = "not-a-valid-email";
+        Account account = mockAccount(AccountType.CUSTOMER);
+        account.setEmail(invalidEmail);
+
+        // Mock
+        when(repository.update(invalidEmail, account)).thenThrow(IllegalArgumentException.class);
+
+        // Test
         MockHttpServletRequestBuilder request = put("/api/v1/account/update")
                 .param("email", invalidEmail)
-                .cookie(new Cookie("session", VALID_SESSION_ID))
+                .cookie(VALID_SESSION_COOKIE)
                 .contentType(MediaType.APPLICATION_JSON);
-
         try {
-            Account account = mockAccount(AccountType.CUSTOMER);
-            account.setEmail(invalidEmail);
-            mvc.perform(request.content(jsonOf(account)))
-                    .andExpect(status().isBadRequest());
-
-            verify(repository, times(1)).update(invalidEmail, account);
-            verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
-        } catch (Throwable t) {
-            fail(t);
+            mvc.perform(request.content(jsonOf(account))).andExpect(status().isBadRequest());
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).update(invalidEmail, account);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void getSucceeds() {
-        MockHttpServletRequestBuilder request = get("/api/v1/account/get")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .cookie(new Cookie("session", VALID_SESSION_ID));
+    public void getSucceeds() throws Exception {
+        Account account = getFromFirestore("Accounts", CUSTOMER_EMAIL, Account.class);
+        Account.filterSensitiveData(account);
 
+        // Mock
+        when(repository.get(CUSTOMER_EMAIL)).thenReturn(account);
+
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/account/get")
+                .param("email", CUSTOMER_EMAIL)
+                .cookie(VALID_SESSION_COOKIE);
         try {
-            Account account = getFromFirestore("Accounts", VALID_CUSTOMER_EMAIL, Account.class);
-            Account.filterSensitiveData(account);
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(content().string(jsonOf(account)));
-
-            verify(repository, times(1)).get(VALID_CUSTOMER_EMAIL);
-            verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).get(CUSTOMER_EMAIL);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void getFailsInvalidSession() {
-        String invalidSessionId = "invalid-session-id";
-        MockHttpServletRequestBuilder request = get("/api/v1/account/get")
-                .param("email", VALID_CUSTOMER_EMAIL)
-                .cookie(new Cookie("session", invalidSessionId));
+    public void getFailsInvalidSession() throws Exception {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
 
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/account/get")
+                .param("email", CUSTOMER_EMAIL)
+                .cookie(INVALID_SESSION_COOKIE);
         try {
             mvc.perform(request)
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
-
-            verify(repository, never()).get(any());
-            verify(authenticator, times(1)).validateSession(invalidSessionId);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, never()).get(any());
+        verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void getFailsEmailNotFound() {
+    public void getFailsEmailNotFound() throws Exception {
         String invalidEmail = "invalid-email";
+
+        // Mock
+        when(repository.get(invalidEmail)).thenThrow(IllegalArgumentException.class);
+
+        // Test
         MockHttpServletRequestBuilder request = get("/api/v1/account/get")
                 .param("email", invalidEmail)
-                .cookie(new Cookie("session", VALID_SESSION_ID));
-
+                .cookie(VALID_SESSION_COOKIE);
         try {
             mvc.perform(request).andExpect(status().isBadRequest());
-
-            verify(repository, times(1)).get(invalidEmail);
-            verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).get(invalidEmail);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void usernameExistsSucceeds() {
-        MockHttpServletRequestBuilder request = get("/api/v1/account/usernameExists")
-                .param("username", VALID_CUSTOMER_USERNAME)
-                .cookie(new Cookie("session", VALID_SESSION_ID));
+    public void usernameExistsSucceeds() throws Exception {
+        // Mock
+        when(repository.usernameExists(CUSTOMER_USERNAME)).thenReturn(true);
 
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/account/usernameExists")
+                .param("username", CUSTOMER_USERNAME)
+                .cookie(VALID_SESSION_COOKIE);
         try {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(content().string("true"));
-
-            verify(repository, times(1)).usernameExists(VALID_CUSTOMER_USERNAME);
-            verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, times(1)).usernameExists(CUSTOMER_USERNAME);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
      * todo
      */
     @Test
-    public void usernameExistsFailsInvalidSession() {
-        String invalidSessionId = "invalid-session-id";
-        MockHttpServletRequestBuilder request = get("/api/v1/account/usernameExists")
-                .param("username", VALID_CUSTOMER_USERNAME)
-                .cookie(new Cookie("session", invalidSessionId));
+    public void usernameExistsFailsInvalidSession() throws Exception {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
 
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/account/usernameExists")
+                .param("username", CUSTOMER_USERNAME)
+                .cookie(INVALID_SESSION_COOKIE);
         try {
             mvc.perform(request)
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
-
-            verify(repository, never()).usernameExists(any());
-            verify(authenticator, times(1)).validateSession(invalidSessionId);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
+
+        // Verify
+        verify(repository, never()).usernameExists(any());
+        verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
+    }
+
+    /**
+     * todo
+     */
+    @Test
+    public void usernameExistsFailsInternalError() throws Exception {
+        // Mock
+        when(repository.usernameExists(CUSTOMER_USERNAME)).thenThrow(Exception.class);
+
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/account/usernameExists")
+                .param("username", CUSTOMER_USERNAME)
+                .cookie(VALID_SESSION_COOKIE);
+        try {
+            mvc.perform(request).andExpect(status().isInternalServerError());
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        // Verify
+        verify(repository, times(1)).usernameExists(CUSTOMER_USERNAME);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 }

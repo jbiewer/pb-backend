@@ -34,7 +34,7 @@ public class AccountRepositoryTest {
     @BeforeEach
     public void beforeEach() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
         URI uri = Objects.requireNonNull(ClassLoader.getSystemResource("collections")).toURI();
-        generateFirestoreData(new File(uri));
+        loadFirestoreDocuments(new File(uri));
     }
 
     /**
@@ -75,8 +75,8 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for no account type");
         } catch (IllegalArgumentException e) {
             assertEquals("Must specify account type", e.getMessage());
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -92,8 +92,8 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for no account email");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Must specify account email");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -105,8 +105,8 @@ public class AccountRepositoryTest {
         try {
             Customer customer = mockCustomer();
             assertEquals(repository.create(customer), "Account created successfully!");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -118,8 +118,8 @@ public class AccountRepositoryTest {
         try {
             Merchant merchant = mockMerchant();
             assertEquals(repository.create(merchant), "Account created successfully!");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -135,8 +135,8 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for no bank account");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Merchant account must have a bank account");
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -149,8 +149,8 @@ public class AccountRepositoryTest {
         String password = "user1-pw";
         try {
             assertEquals("Login successful!", repository.login(email, password));
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -204,8 +204,8 @@ public class AccountRepositoryTest {
             databaseAccount = getFromFirestore("Accounts", account.getEmail(), Account.class);
             databaseAccount.setTransactionIds(null);
             assertEquals(account, databaseAccount);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -225,8 +225,8 @@ public class AccountRepositoryTest {
             databaseAccount = getFromFirestore("Accounts", email, Account.class);
             databaseAccount.setTransactionIds(null);
             assertEquals(account, databaseAccount);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -240,8 +240,8 @@ public class AccountRepositoryTest {
             repository.update("user-that-does-not-exist@email.com", account);
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -259,8 +259,8 @@ public class AccountRepositoryTest {
             databaseAccount.setTransactionIds(null);
             databaseAccount.setPassword(null);
             assertEquals(account, databaseAccount);
-        } catch (Throwable t) {
-            fail(t);
+        } catch (Exception e) {
+            fail(e);
         }
     }
 
@@ -271,8 +271,8 @@ public class AccountRepositoryTest {
     public void getReturnsAccountObject() {
         try {
             assertEquals(repository.get("user1@email.com").getClass(), Account.class); 
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail();
         }
     }
 
@@ -283,8 +283,8 @@ public class AccountRepositoryTest {
     public void getDoesNotReturnSensitiveInfo() {
         try {
             assertNull(repository.get("user1@email.com").getPassword());
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail(e);
         }
     }
 
@@ -298,8 +298,8 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for email not found");
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail(e);
         }
     }
 
@@ -311,8 +311,8 @@ public class AccountRepositoryTest {
         try {
             assertTrue(repository.usernameExists("user1"));
             assertFalse(repository.usernameExists("nonexistent-user"));
-        } catch(Throwable t) {
-            fail(t);
+        } catch(Exception e) {
+            fail(e);
         }
     }
 }

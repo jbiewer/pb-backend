@@ -1,7 +1,7 @@
 package com.piggybank.model;
 
 /**
- * todo
+ * Account model but with the type set to CUSTOMER.
  */
 public class Customer extends Account {
     public Customer() {

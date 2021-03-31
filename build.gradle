@@ -85,10 +85,10 @@ jacocoTestReport {
     dependsOn test
 
     List<String> EXCLUSIONS = [
+            'com/piggybank/PiggyBankApplication*',
             'com/piggybank/model/**',
-            'com/piggybank/PiggyBankApplication*'
+            'com/piggybank/components/SessionAuthenticator*',
     ]
-
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, excludes: EXCLUSIONS)

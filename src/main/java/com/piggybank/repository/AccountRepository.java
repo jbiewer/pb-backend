@@ -7,7 +7,6 @@ import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
-import io.grpc.alts.internal.Identity;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -16,13 +15,10 @@ import org.springframework.stereotype.Repository;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static com.piggybank.model.Account.AccountType;
-import static com.piggybank.util.Util.*;
+import static com.piggybank.util.Util.ifNonNull;
+import static com.piggybank.util.Util.ifNull;
 
 /**
  * Interface for database interactions for accounts.
@@ -43,7 +39,7 @@ public class AccountRepository extends PBRepository {
     /**
      * Tests the AccountController interface.
      *
-     * @return Result of query.
+     * @return Success message.
      */
     @NonNull
     public String test(@Nullable String message) {
@@ -53,13 +49,17 @@ public class AccountRepository extends PBRepository {
     }
 
     /**
-     * Creates new account if one not found with same email. 
-     * Fields set according to Account object parameter
-     * 
-     * @param newAccount - Account object representing the new account
-     * @return todo
+     * Creates a new account in Firestore if one with the specified email doesn't already exist.
+     * Using the fields from the 'newAccount' parameter, a document is created in Firestore labelled with the
+     * email in 'newAccount'.
+     *
+     * @param newAccount Account object representing the new account in Firestore.
+     * @return Message indicating success.
+     * @throws IllegalArgumentException When the account type, email, or password fields are not specified,
+     *                                  or if the account type is MERCHANT but the bank account is not specified.
+     * @throws Exception For any internal error.
      */
-    public String create(@NonNull Account newAccount) throws Throwable {
+    public String create(@NonNull Account newAccount) throws Exception {
         ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type"));
         if (newAccount.getType() == AccountType.MERCHANT) {
             ifNull(newAccount.getBankAccount()).thenThrow(new IllegalArgumentException("Merchant account must have a bank account"));
@@ -77,9 +77,9 @@ public class AccountRepository extends PBRepository {
      * @param email
      * @param password
      * @return
-     * @throws Throwable
+     * @throws Exception
      */
-    public String login(@NonNull String email, @NonNull String password) throws Throwable {
+    public String login(@NonNull String email, @NonNull String password) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             // Confirm account exists.
             DocumentSnapshot snapshot = tx.get(collection.document(email)).get();
@@ -108,7 +108,7 @@ public class AccountRepository extends PBRepository {
      * @param content - object containing fields that need updating
      * @return todo
      */
-    public String update(@NonNull String email, @NonNull Account content) throws Throwable {
+    public String update(@NonNull String email, @NonNull Account content) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             String currentEmail = email;
 
@@ -148,7 +148,7 @@ public class AccountRepository extends PBRepository {
      * @param email - email linked to the account of interest
      * @return todo
      */
-    public Account get(String email) throws Throwable {
+    public Account get(String email) throws Exception {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(collection.document(email)).get();
             if (snapshot.exists()) {
@@ -167,9 +167,9 @@ public class AccountRepository extends PBRepository {
      * 
      * @param username
      * @return
-     * @throws Throwable
+     * @throws Exception
      */
-    public boolean usernameExists(String username) throws Throwable {
+    public boolean usernameExists(String username) throws Exception {
         ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
 //            Optional<DocumentSnapshot> snapshot = StreamSupport.stream(collection.listDocuments().spliterator(), true)
 //                    .map(document -> {

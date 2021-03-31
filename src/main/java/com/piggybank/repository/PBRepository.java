@@ -20,11 +20,16 @@ public abstract class PBRepository {
         this.collection = FirestoreClient.getFirestore().collection(collectionLabel);
     }
 
-    protected static <T> T getApiFuture(ApiFuture<T> future) throws Throwable {
+    protected static <T> T getApiFuture(ApiFuture<T> future) throws Exception {
         try {
             return future.get();
         } catch (ExecutionException | InterruptedException e) {
-            throw e.getCause();
+            // todo: log internally
+            if (e.getCause() instanceof Exception) {
+                throw (Exception) e.getCause();
+            } else {
+                throw new Exception("Internal server error.");
+            }
         }
     }
 }

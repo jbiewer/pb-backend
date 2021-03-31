@@ -85,8 +85,8 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
-        } catch (Throwable t) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -126,8 +126,8 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to create a session");
         } catch (AuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Recent sign in required");
-        } catch (Throwable t) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -205,8 +205,8 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.ok(repository.update(email, content));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
-        } catch (Throwable t) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -242,8 +242,8 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.ok(repository.get(email));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
-        } catch (Throwable t) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(t.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -273,8 +273,8 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.ok(repository.usernameExists(username));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
-        } catch (Throwable t) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(t.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 }
