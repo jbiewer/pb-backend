@@ -61,7 +61,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * Load Firestore with fake data before each test.
      */
     @BeforeEach
     public void beforeEach() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
@@ -70,7 +70,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * Clear Firestore of fake data after each test.
      */
     @AfterEach
     public void afterEach() throws IOException, InterruptedException {
@@ -78,7 +78,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The test() endpoint should succeed w/ HTTP status 200 OK w/out a message (message is null).
      */
     @Test
     public void testSucceedsWithoutMessage() throws FirebaseAuthException {
@@ -100,7 +100,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The test() endpoint should succeed w/ HTTP status 200 OK with a message specified.
      */
     @Test
     public void testSucceedsWithMessage() throws FirebaseAuthException {
@@ -122,7 +122,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The test() endpoint should succeed w/ HTTP status 200 OK with a valid session ID (message is null).
      */
     @Test
     public void testSucceedsWithValidSession() throws FirebaseAuthException {
@@ -144,7 +144,8 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The test() endpoint should fail with HTTP status 401 UNAUTHORIZED when an invalid session ID is
+     * passed in.
      */
     @Test
     public void testFailsWithInvalidSession() throws FirebaseAuthException {
@@ -166,11 +167,11 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The create() endpoint should succeed w/ HTTP status 200 OK using a valid token ID.
      */
     @Test
     public void createSucceeds() throws Exception {
-        Account account = getFromFirestore("Accounts", CUSTOMER_EMAIL, Account.class);
+        Account account = mockAccount(AccountType.CUSTOMER);
 
         // Mock
         doReturn(VALID_SESSION_COOKIE).when(authenticator).generateNewSession(VALID_TOKEN_ID);
@@ -194,7 +195,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The create() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because of an invalid token ID.
      */
     @Test
     public void createFailsInvalidToken() throws Exception {
@@ -221,7 +222,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The create() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the token ID is expired.
      */
     @Test
     public void createFailsExpiredToken() throws Exception {
@@ -248,7 +249,8 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The create() endpoint should fail w/ HTTP status 400 BAD REQUEST because the type field is missing in the
+     * account parameter passed in.
      */
     @Test
     public void createFailsMissingField() throws Exception {
@@ -275,7 +277,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The login() endpoint should succeed w/ HTTP status 200 OK using a valid token ID.
      */
     @Test
     public void loginSucceeds() throws Exception {
@@ -302,7 +304,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The login() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the token ID is invalid.
      */
     @Test
     public void loginFailsInvalidToken() throws Exception {
@@ -328,7 +330,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The login() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the token ID is expired.
      */
     @Test
     public void loginFailsExpiredToken() throws Exception {
@@ -354,7 +356,8 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The login() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email/password credentials are
+     * invalid (not found).
      */
     @Test
     public void loginFailsInvalidCredentials() throws Exception {
@@ -383,7 +386,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The logout() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
      */
     @Test
     public void logoutSucceeds() throws FirebaseAuthException {
@@ -403,7 +406,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The logout() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
     public void logoutFailsInvalidSession() throws FirebaseAuthException {
@@ -424,7 +427,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The update() endpoint should succeed w/ HTTP status 200 OK using a valid session ID and a fake account.
      */
     @Test
     public void updateSucceeds() throws Exception {
@@ -454,7 +457,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The update() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
     public void updateFailsInvalidSession() throws Exception {
@@ -483,7 +486,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The update() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
      */
     @Test
     public void updateFailsEmailNotFound() throws Exception {
@@ -511,7 +514,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The get() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
      */
     @Test
     public void getSucceeds() throws Exception {
@@ -539,7 +542,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The get() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
     public void getFailsInvalidSession() throws Exception {
@@ -564,7 +567,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The get() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
      */
     @Test
     public void getFailsEmailNotFound() throws Exception {
@@ -589,7 +592,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The usernameExists() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
      */
     @Test
     public void usernameExistsSucceeds() throws Exception {
@@ -614,7 +617,7 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The usernameExists() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
     public void usernameExistsFailsInvalidSession() throws Exception {
@@ -639,7 +642,8 @@ public class AccountControllerTest {
     }
 
     /**
-     * todo
+     * The usernameExists() endpoint should fail w/ HTTP status 500 INTERNAL SERVER ERROR because of an internal
+     * issue that occurred.
      */
     @Test
     public void usernameExistsFailsInternalError() throws Exception {
