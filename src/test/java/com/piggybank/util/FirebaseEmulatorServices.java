@@ -8,6 +8,8 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
+import com.piggybank.model.Transaction;
+
 import org.apache.http.HttpStatus;
 
 import java.io.File;
@@ -44,6 +46,7 @@ public class FirebaseEmulatorServices {
 
         ObjectMapper mapper = new ObjectMapper();
         addAccounts(mapper, new File(collectionsDirectory.getCanonicalPath(), "accounts.json"));
+        addTransactions(mapper, new File(collectionsDirectory.getCanonicalPath(), "transactions.json"));
         // add other files...
     }
 
@@ -120,6 +123,20 @@ public class FirebaseEmulatorServices {
         CollectionReference collection = FirestoreClient.getFirestore().collection("Accounts");
         for (Account account : (Account[]) cache.get("Accounts")) {
             futures.add(collection.document(account.getEmail()).set(account));
+        }
+
+        for (ApiFuture<WriteResult> future : futures) {
+            future.get();
+        }
+    }
+
+    private static void addTransactions(ObjectMapper mapper, File file) throws IOException, ExecutionException, InterruptedException {
+        cache.putIfAbsent("Transactions", mapper.readValue(file, Transaction[].class));
+
+        List<ApiFuture<WriteResult>> futures = new ArrayList<>();
+        CollectionReference collection = FirestoreClient.getFirestore().collection("Transactions");
+        for (Transaction txn : (Transaction[]) cache.get("Transactions")) {
+            futures.add(collection.document(txn.getId()).set(txn));
         }
 
         for (ApiFuture<WriteResult> future : futures) {

@@ -11,6 +11,7 @@ public class Transaction {
 
     private String id;
     private String transactorEmail;
+    private String recipientEmail; 
     private float amount;
     private TransactionType type;
 
@@ -34,6 +35,14 @@ public class Transaction {
 
     public void setTransactorEmail(String transactorEmail) {
         this.transactorEmail = transactorEmail;
+    }
+
+    public String getRecipientEmail() {
+        return recipientEmail;
+    }
+
+    public void setRecipientEmail(String recipientEmail) {
+        this.recipientEmail = recipientEmail;
     }
 
     public float getAmount() {
