@@ -1,37 +1,35 @@
 package com.piggybank.repository;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 import com.google.firebase.internal.NonNull;
 import com.piggybank.model.Account;
 import com.piggybank.model.Transaction;
-
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Repository
 public class TransactionRepository extends PBRepository {
-
-    private final CollectionReference accountCollection; 
+    private final CollectionReference accountCollection;
 
     public TransactionRepository(Environment env) {
         super(Objects.requireNonNull(env.getProperty("firebase.database.labels.transactions")));
-        String txnLabel = env.getProperty("firebase.database.labels.accounts");
-        Firestore firestore = FirestoreClient.getFirestore();
-        accountCollection = firestore.collection(Objects.requireNonNull(txnLabel));
+        String accountsLabel = Objects.requireNonNull(env.getProperty("firebase.database.labels.accounts"));
+        accountCollection = FirestoreClient.getFirestore().collection(accountsLabel);
     }
 
+    /**
+     * todo
+     * @param message
+     * @return
+     */
     @NonNull
     public String test(String message) {
         return message == null ?
@@ -52,36 +50,31 @@ public class TransactionRepository extends PBRepository {
         }
 
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
-            //account of transactor
-            DocumentSnapshot accountSnapshot = tx.get(accountCollection.document(bankTxn.getTransactorEmail())).get();
-            Account accountObject = accountSnapshot.toObject(Account.class);
+            DocumentReference document = accountCollection.document(bankTxn.getTransactorEmail());
+            DocumentSnapshot snapshot = document.get(FieldMask.of("balance", "transactionIds")).get();
+            Account transactor = snapshot.toObject(Account.class);
 
-            if (!accountSnapshot.exists() || accountObject == null) {
+            if (!snapshot.exists() || transactor == null) {
                 throw new IllegalArgumentException("Account associated with txn transactor doesn't exist.");
             } else {
-                //reference to account document
-                DocumentReference accountDoc = accountCollection.document(bankTxn.getTransactorEmail());
-
-                //Transaction amount can't be more than current balance
-                if (accountObject.getBalance() < bankTxn.getAmount()) {
+                // Transaction amount can't be more than current balance
+                if (transactor.getBalance() < bankTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds account balance!");
                 }
 
-                //update transaction id list in account document
-                List<String> transactionIds = accountObject.getTransactionIds(); 
-                transactionIds.add(bankTxn.getId());
-                tx.update(accountDoc, "transactionIds", transactionIds);
-                
-                //remove transacted amount from account balance
-                tx.update(accountDoc, "balance", accountObject.getBalance() - bankTxn.getAmount());
-                
-                //create transaction in transactions collection
-                getApiFuture(collection.document(bankTxn.getId()).create(bankTxn));
-                
-                
+                String id = UUID.randomUUID().toString();
+                ApiFuture<WriteResult> createFuture = collection.document(id).create(bankTxn);
+
+                // Add transaction ID to account's list and remove transaction amount from account's balance.
+                transactor.getTransactionIds().add(id);
+                tx.update(document, "transactionIds", transactor.getTransactionIds());
+                tx.update(document, "balance", transactor.getBalance() - bankTxn.getAmount());
+
+                createFuture.get();
                 return "Transaction successful!";
             }
         });
+
         return getApiFuture(futureTx);
     }
 
@@ -98,42 +91,41 @@ public class TransactionRepository extends PBRepository {
         }
 
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
-            //account of transactor
-            DocumentSnapshot transactorSnapshot = tx.get(accountCollection.document(peerTxn.getTransactorEmail())).get();
-            Account transactorObject = transactorSnapshot.toObject(Account.class);
+            DocumentReference transactorDoc = accountCollection.document(peerTxn.getTransactorEmail());
+            DocumentReference recipientDoc = accountCollection.document(peerTxn.getRecipientEmail());
 
-            DocumentSnapshot recipientSnapshot = tx.get(accountCollection.document(peerTxn.getRecipientEmail())).get();
-            Account recipientObject = recipientSnapshot.toObject(Account.class);
+            DocumentSnapshot transactorSnap = transactorDoc.get(FieldMask.of("balance", "transactionIds")).get();
+            DocumentSnapshot recipientSnap = recipientDoc.get(FieldMask.of("balance", "transactionIds")).get();
 
-            if (!transactorSnapshot.exists() || !recipientSnapshot.exists() || transactorObject == null || recipientObject == null) {
-                throw new IllegalArgumentException("Account associated with txn transactor or recipient doesn't exist.");
+            Account transactor = transactorSnap.toObject(Account.class);
+            Account recipient = recipientSnap.toObject(Account.class);
+
+            if (!transactorSnap.exists() || transactor == null) {
+                throw new IllegalArgumentException("Account does not exist specified by the transactor email");
+            } else if (!recipientSnap.exists() || recipient == null) {
+                throw new IllegalArgumentException("Account does not exist specified by the recipient email");
             } else {
-                //reference to account document
-                DocumentReference transactorDoc = accountCollection.document(peerTxn.getTransactorEmail());
-                DocumentReference recipientDoc = accountCollection.document(peerTxn.getRecipientEmail());
-
-                //Transaction amount can't be more than current balance
-                if (transactorObject.getBalance() < peerTxn.getAmount()) {
+                // Transaction amount can't be more than current balance
+                if (transactor.getBalance() < peerTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance!");
                 }
 
-                //update transaction id lists in account documents for both transactor and recipient
-                List<String> transactorIds = transactorObject.getTransactionIds(); 
-                List<String> recipientIds = recipientObject.getTransactionIds();
-                transactorIds.add(peerTxn.getId());
-                recipientIds.add(peerTxn.getId());
-                tx.update(transactorDoc, "transactionIds", transactorIds);
-                tx.update(recipientDoc, "transactionIds", recipientIds);
+                String id = UUID.randomUUID().toString();
+                ApiFuture<WriteResult> createFuture = collection.document(id).create(peerTxn);
 
-                //update account balances for both transactor and recipient
-                tx.update(transactorDoc, "balance", transactorObject.getBalance() - peerTxn.getAmount());
-                tx.update(recipientDoc, "balance", recipientObject.getBalance() + peerTxn.getAmount());
+                // Update transaction ID lists and balances in both the transactor and recipient documents.
+                transactor.getTransactionIds().add(id);
+                recipient.getTransactionIds().add(id);
+                tx.update(transactorDoc, "transactionIds", transactor.getTransactionIds());
+                tx.update(recipientDoc, "transactionIds", recipient.getTransactionIds());
+                tx.update(transactorDoc, "balance", transactor.getBalance() - peerTxn.getAmount());
+                tx.update(recipientDoc, "balance", recipient.getBalance() + peerTxn.getAmount());
 
-                //create transaction in transactions collection
-                getApiFuture(collection.document(peerTxn.getId()).create(peerTxn));
+                createFuture.get();
                 return "Transaction successful!";
             }
         });
+
         return getApiFuture(futureTx);
     }
 
@@ -145,27 +137,18 @@ public class TransactionRepository extends PBRepository {
      */
     @NonNull
     public Transaction getTxn(String txnId) throws Exception {
-        ApiFuture<Transaction> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
-            //find account with matching email
-            // DocumentSnapshot snapshot = transaction.get(accountCollection.document(email)).get();
-            // if (snapshot.exists()) {
-                List<QueryDocumentSnapshot> documents = collection.get().get().getDocuments(); 
-                //list of all Transaction objects in database
-                List<Transaction> transactionList = documents.parallelStream()
-					.map(documentSnapshot -> documentSnapshot.toObject(Transaction.class))
-					.collect(Collectors.toList());
+        for (DocumentReference document : collection.listDocuments()) {
+            if (document.getId().equals(txnId)) {
+                Transaction txn = getApiFuture(document.get()).toObject(Transaction.class);
+                if (txn == null) {
+                    break;
+                } else {
+                    return txn;
+                }
+            }
+        }
 
-                //find transaction that matches input string
-
-                return transactionList.stream()
-                        .filter(currentTransaction -> currentTransaction.getId().equals(txnId))
-                        .findAny().orElse(null);
-            // } else {
-            //     throw new IllegalArgumentException("Account with that email not found");
-            // }
-        });
-
-        return getApiFuture(futureTx);
+        throw new IllegalArgumentException("Transaction with that ID doesn't exist");
     }
 
     /**
@@ -177,24 +160,28 @@ public class TransactionRepository extends PBRepository {
     @NonNull
     public List<Transaction> getAllTxnFromUser(String email) throws Exception {
         ApiFuture<List<Transaction>> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
-            //asynchronously retrieve all documents
-            List<QueryDocumentSnapshot> documents = collection.get().get().getDocuments();
-
-            //Account to get transactions from
-            DocumentSnapshot snapshot = tx.get(accountCollection.document(email)).get();
+            // Account to get transactions from.
+            DocumentSnapshot snapshot = collection.document(email).get(FieldMask.of("transactionIds")).get();
             Account account = snapshot.toObject(Account.class);
             if (!snapshot.exists() || account == null) {
                 throw new IllegalArgumentException("Account with that email not found");
             }
             
-            //select all txns in transactions collection that also appear in user's txnId list
-            List<Transaction> transactions = documents.parallelStream()
-					.map(documentSnapshot -> documentSnapshot.toObject(Transaction.class))
-                    .filter(txn -> account.getTransactionIds().contains(txn.getId()))
+            // Select all the transactions whose ID is in the account's transaction ID list.
+            return account.getTransactionIds().parallelStream()
+                    .map(id -> {
+                        try {
+                            return collection.document(id).get().get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .filter(DocumentSnapshot::exists)
+					.map(snap -> snap.toObject(Transaction.class))
+                    .filter(Objects::nonNull)
 					.collect(Collectors.toList());
-
-            if (transactions.isEmpty()) throw new Exception("Transaction list is empty");
-            return transactions;
         });
 
         return getApiFuture(futureTx);
