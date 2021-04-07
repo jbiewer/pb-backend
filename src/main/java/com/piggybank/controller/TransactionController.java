@@ -53,11 +53,7 @@ public class TransactionController extends PBController<TransactionRepository> {
         @RequestBody Transaction bankTxn, 
         @CookieValue(value = "session") String sessionCookieId
     ) {
-        try{
-            //type must match request
-            if (bankTxn.getType() != Transaction.TransactionType.BANK) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Transaction type does not match!");
-            }
+        try {
             authenticator.validateSession(sessionCookieId);
             return ResponseEntity.ok(repository.bankTxn(bankTxn));
         } catch (FirebaseAuthException e) {
@@ -74,10 +70,6 @@ public class TransactionController extends PBController<TransactionRepository> {
         @CookieValue(value = "session") String sessionCookieId
     ) {
         try  {
-            //type must match request
-            if (bankTxn.getType() != Transaction.TransactionType.PEER_TO_PEER) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Transaction type does not match!");
-            }
             authenticator.validateSession(sessionCookieId);
             return ResponseEntity.ok(repository.peerTxn(bankTxn));
         } catch (FirebaseAuthException e) {
@@ -91,7 +83,6 @@ public class TransactionController extends PBController<TransactionRepository> {
     @GetMapping(BASE_URL + "getSingleTransaction")
     public ResponseEntity<?> getSingleTransaction(
         @RequestParam String txnId, 
-        @RequestParam String email,
         @CookieValue(value = "session") String sessionCookieId
     ) {
         try {

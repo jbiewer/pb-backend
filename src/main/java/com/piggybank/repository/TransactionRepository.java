@@ -10,13 +10,14 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.google.firebase.internal.NonNull;
 import com.piggybank.model.Account;
 import com.piggybank.model.Transaction;
 
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -46,19 +47,21 @@ public class TransactionRepository extends PBRepository {
      */
     @NonNull
     public String bankTxn(@NonNull Transaction bankTxn) throws Exception {
-       
+        if (bankTxn.getType() != Transaction.TransactionType.BANK) {
+            throw new IllegalArgumentException("Transaction type does not match (must be type BANK)");
+        }
+
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             //account of transactor
             DocumentSnapshot accountSnapshot = tx.get(accountCollection.document(bankTxn.getTransactorEmail())).get();
-            
-            if (!accountSnapshot.exists()) {
+            Account accountObject = accountSnapshot.toObject(Account.class);
+
+            if (!accountSnapshot.exists() || accountObject == null) {
                 throw new IllegalArgumentException("Account associated with txn transactor doesn't exist.");
             } else {
                 //reference to account document
                 DocumentReference accountDoc = accountCollection.document(bankTxn.getTransactorEmail());
-                //account object
-                Account accountObject = accountSnapshot.toObject(Account.class);
-                
+
                 //Transaction amount can't be more than current balance
                 if (accountObject.getBalance() < bankTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds account balance!");
@@ -90,20 +93,24 @@ public class TransactionRepository extends PBRepository {
      */
     @NonNull
     public Object peerTxn(Transaction peerTxn) throws Exception {
+        if (peerTxn.getType() != Transaction.TransactionType.PEER_TO_PEER) {
+            throw new IllegalArgumentException("Transaction type does not match (must be type PEER_TO_PEER)");
+        }
+
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             //account of transactor
             DocumentSnapshot transactorSnapshot = tx.get(accountCollection.document(peerTxn.getTransactorEmail())).get();
+            Account transactorObject = transactorSnapshot.toObject(Account.class);
+
             DocumentSnapshot recipientSnapshot = tx.get(accountCollection.document(peerTxn.getRecipientEmail())).get();
-            if (!transactorSnapshot.exists() || !recipientSnapshot.exists()) {
+            Account recipientObject = recipientSnapshot.toObject(Account.class);
+
+            if (!transactorSnapshot.exists() || !recipientSnapshot.exists() || transactorObject == null || recipientObject == null) {
                 throw new IllegalArgumentException("Account associated with txn transactor or recipient doesn't exist.");
             } else {
                 //reference to account document
                 DocumentReference transactorDoc = accountCollection.document(peerTxn.getTransactorEmail());
                 DocumentReference recipientDoc = accountCollection.document(peerTxn.getRecipientEmail());
-
-                //account object
-                Account transactorObject = transactorSnapshot.toObject(Account.class);
-                Account recipientObject = recipientSnapshot.toObject(Account.class);
 
                 //Transaction amount can't be more than current balance
                 if (transactorObject.getBalance() < peerTxn.getAmount()) {
@@ -133,7 +140,6 @@ public class TransactionRepository extends PBRepository {
     /**
      * todo
      * @param txnId
-     * @param email
      * @return
      * @throws Exception
      */
@@ -150,11 +156,10 @@ public class TransactionRepository extends PBRepository {
 					.collect(Collectors.toList());
 
                 //find transaction that matches input string
-                Transaction txn = transactionList.stream()
-                            .filter(currentTransaction -> currentTransaction.getId().equals(txnId))
-                            .findAny().orElse(null);
-                
-                return txn;
+
+                return transactionList.stream()
+                        .filter(currentTransaction -> currentTransaction.getId().equals(txnId))
+                        .findAny().orElse(null);
             // } else {
             //     throw new IllegalArgumentException("Account with that email not found");
             // }
@@ -176,7 +181,11 @@ public class TransactionRepository extends PBRepository {
             List<QueryDocumentSnapshot> documents = collection.get().get().getDocuments();
 
             //Account to get transactions from
-            Account account = tx.get(accountCollection.document(email)).get().toObject(Account.class); 
+            DocumentSnapshot snapshot = tx.get(accountCollection.document(email)).get();
+            Account account = snapshot.toObject(Account.class);
+            if (!snapshot.exists() || account == null) {
+                throw new IllegalArgumentException("Account with that email not found");
+            }
             
             //select all txns in transactions collection that also appear in user's txnId list
             List<Transaction> transactions = documents.parallelStream()
