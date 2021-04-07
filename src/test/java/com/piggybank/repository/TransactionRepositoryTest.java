@@ -115,8 +115,8 @@ public class TransactionRepositoryTest {
             float user1NetProfit = user1FinalBalance - user1InitialBalance; 
             float user2NetProfit = user2InitialBalance - user2FinalBalance; 
             //Maybe find a better way to do this (rounding to nearest hundredth?)
-            assert(txn.getAmount() < user1NetProfit + 0.01 && txn.getAmount() > user1NetProfit - 0.01);
-            assert(txn.getAmount() < user2NetProfit + 0.01 && txn.getAmount() > user2NetProfit - 0.01);
+            assertTrue(txn.getAmount() < user1NetProfit + 0.01 && txn.getAmount() > user1NetProfit - 0.01);
+            assertTrue(txn.getAmount() < user2NetProfit + 0.01 && txn.getAmount() > user2NetProfit - 0.01);
         } catch (Exception e) {
             fail(e); 
         }

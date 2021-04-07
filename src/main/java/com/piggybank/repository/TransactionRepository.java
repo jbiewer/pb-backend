@@ -161,7 +161,7 @@ public class TransactionRepository extends PBRepository {
     public List<Transaction> getAllTxnFromUser(String email) throws Exception {
         ApiFuture<List<Transaction>> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             // Account to get transactions from.
-            DocumentSnapshot snapshot = collection.document(email).get(FieldMask.of("transactionIds")).get();
+            DocumentSnapshot snapshot = accountCollection.document(email).get(FieldMask.of("transactionIds")).get();
             Account account = snapshot.toObject(Account.class);
             if (!snapshot.exists() || account == null) {
                 throw new IllegalArgumentException("Account with that email not found");
