@@ -95,13 +95,13 @@ public class AccountRepository extends PBRepository {
                 throw new IllegalArgumentException("Account with that email not found");
             }
 
-            // Account exists--verify password.
+            // Update password if it's different.
             String storedPassword = snapshot.getString("password");
-            if (password.equals(storedPassword)) {
-                return "Login successful!";
-            } else {
-                throw new IllegalArgumentException("Password did not match");
+            if (!password.equals(storedPassword)) {
+                tx.update(collection.document(email), "password", password);
             }
+
+            return "Login successful!";
         });
 
         return getApiFuture(futureTx);

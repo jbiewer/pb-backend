@@ -157,6 +157,22 @@ public class AccountRepositoryTest {
     }
 
     /**
+     * The login() method fails given an invalid password (password doesn't match one found in Firestore).
+     */
+    @Test
+    public void loginSucceedsNewPassword() {
+        String email = "user1@email.com";
+        String password = "not-user1-pw";
+        try {
+            assertEquals("Login successful!", repository.login(email, password));
+            Account account = getFromFirestore("Accounts", email, Account.class);
+            assertEquals(password, account.getPassword());
+        } catch (Throwable e) {
+            fail(e);
+        }
+    }
+
+    /**
      * The login() method fails given an invalid email (email not found).
      */
     @Test
@@ -168,23 +184,6 @@ public class AccountRepositoryTest {
             fail("Failed to throw exception for email not found");
         } catch (IllegalArgumentException e) {
             assertEquals("Account with that email not found", e.getMessage());
-        } catch (Throwable e) {
-            fail(e);
-        }
-    }
-
-    /**
-     * The login() method fails given an invalid password (password doesn't match one found in Firestore).
-     */
-    @Test
-    public void loginFailsPasswordMismatch() {
-        String email = "user1@email.com";
-        String password = "not-user1-pw";
-        try {
-            repository.login(email, password);
-            fail("Failed to throw exception for password mismatch");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Password did not match", e.getMessage());
         } catch (Throwable e) {
             fail(e);
         }
