@@ -1,10 +1,10 @@
 package com.piggybank.repository;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldMask;
 import com.google.firebase.cloud.FirestoreClient;
 import com.google.firebase.internal.NonNull;
 import com.piggybank.model.Account;
@@ -12,8 +12,10 @@ import com.piggybank.model.Transaction;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -70,6 +72,7 @@ public class TransactionRepository extends PBRepository {
                 if (transactor.getBalance() < bankTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds account balance");
                 }
+                System.out.println("tx amount: "+bankTxn.getAmount());
 
                 bankTxn.setId(UUID.randomUUID().toString());
 
