@@ -1,5 +1,6 @@
 package com.piggybank.repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ public class TransactionRepository extends PBRepository {
             if (!accountSnapshot.exists()) {
                 throw new IllegalArgumentException("Account associated with txn transactor doesn't exist.");
             } else {
+                
                 //reference to account document
                 DocumentReference accountDoc = accountCollection.document(bankTxn.getTransactorEmail());
                 //account object
@@ -63,18 +65,17 @@ public class TransactionRepository extends PBRepository {
                 if (accountObject.getBalance() < bankTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds account balance!");
                 }
-
                 //update transaction id list in account document
-                List<String> transactionIds = accountObject.getTransactionIds(); 
-                transactionIds.add(bankTxn.getId());
-                tx.update(accountDoc, "transactionIds", transactionIds);
+                if(accountObject.getTransactionIds() == null) {
+                    accountObject.setTransactionIds(new ArrayList<String>());
+                }
+                accountObject.addTransaction(bankTxn.getId());
+                tx.update(accountDoc, "transactionIds", accountObject.getTransactionIds());
                 
                 //remove transacted amount from account balance
                 tx.update(accountDoc, "balance", accountObject.getBalance() - bankTxn.getAmount());
-                
                 //create transaction in transactions collection
                 getApiFuture(collection.document(bankTxn.getId()).create(bankTxn));
-                
                 
                 return "Transaction successful!";
             }
@@ -111,12 +112,12 @@ public class TransactionRepository extends PBRepository {
                 }
 
                 //update transaction id lists in account documents for both transactor and recipient
-                List<String> transactorIds = transactorObject.getTransactionIds(); 
-                List<String> recipientIds = recipientObject.getTransactionIds();
-                transactorIds.add(peerTxn.getId());
-                recipientIds.add(peerTxn.getId());
-                tx.update(transactorDoc, "transactionIds", transactorIds);
-                tx.update(recipientDoc, "transactionIds", recipientIds);
+                // List<String> transactorIds = transactorObject.getTransactionIds(); 
+                // List<String> recipientIds = recipientObject.getTransactionIds();
+                transactorObject.addTransaction(peerTxn.getId());
+                recipientObject.addTransaction(peerTxn.getId());
+                tx.update(transactorDoc, "transactionIds", transactorObject.getTransactionIds());
+                tx.update(recipientDoc, "transactionIds", recipientObject.getTransactionIds());
 
                 //update account balances for both transactor and recipient
                 tx.update(transactorDoc, "balance", transactorObject.getBalance() - peerTxn.getAmount());
