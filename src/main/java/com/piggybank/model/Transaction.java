@@ -12,7 +12,7 @@ public class Transaction {
     private String id;
     private String transactorEmail;
     private String recipientEmail; 
-    private float amount;
+    private long amount;
     private TransactionType type;
 
     public Transaction() {}
@@ -45,11 +45,11 @@ public class Transaction {
         this.recipientEmail = recipientEmail;
     }
 
-    public float getAmount() {
+    public long getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(long amount) {
         this.amount = amount;
     }
 

@@ -30,7 +30,7 @@ public class Account {
     private String email;
     private AccountType type;
     private String profilePictureUrl;
-    private Float balance;
+    private long balance;
     private BankAccount bankAccount;
     private List<String> transactionIds;
 
@@ -81,11 +81,11 @@ public class Account {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public Float getBalance() {
+    public long getBalance() {
         return balance;
     }
 
-    public void setBalance(Float balance) {
+    public void setBalance(long balance) {
         this.balance = balance;
     }
 

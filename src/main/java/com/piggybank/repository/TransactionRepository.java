@@ -1,5 +1,6 @@
 package com.piggybank.repository;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -66,22 +67,23 @@ public class TransactionRepository extends PBRepository {
                 if (transactor.getBalance() < bankTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds account balance!");
                 }
+                System.out.println("tx amount: "+bankTxn.getAmount());
 
                 String id = UUID.randomUUID().toString();
                 ApiFuture<WriteResult> createFuture = collection.document(id).create(bankTxn);
 
                 // Add transaction ID to account's list and remove transaction amount from account's balance.
-                // transactor.getTransactionIds().add(id);
+                //if no transactions yet, create list
                 if(transactor.getTransactionIds() == null) {
                     transactor.setTransactionIds(new ArrayList<String>());
                 }
                 transactor.addTransaction(id);
-
                 tx.update(document, "transactionIds", transactor.getTransactionIds());
-                tx.update(document, "balance", transactor.getBalance() - bankTxn.getAmount());
+                long newAmount = (transactor.getBalance() - bankTxn.getAmount());
+                System.out.println(newAmount);
+                tx.update(document, "balance", newAmount);
                 
                 createFuture.get();
-                System.out.println("HELLO WORLD");
                 return "Transaction successful!";
             }
         });
