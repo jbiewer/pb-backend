@@ -105,6 +105,10 @@ public class Account {
         this.transactionIds = transactionIds;
     }
 
+    public void addTransaction(String txn) {
+        this.transactionIds.add(txn);
+    }
+
     @Override
     public String toString() {
         return "Account{" +

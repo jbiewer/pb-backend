@@ -1,5 +1,10 @@
 package com.piggybank.repository;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
@@ -66,11 +71,17 @@ public class TransactionRepository extends PBRepository {
                 ApiFuture<WriteResult> createFuture = collection.document(id).create(bankTxn);
 
                 // Add transaction ID to account's list and remove transaction amount from account's balance.
-                transactor.getTransactionIds().add(id);
+                // transactor.getTransactionIds().add(id);
+                if(transactor.getTransactionIds() == null) {
+                    transactor.setTransactionIds(new ArrayList<String>());
+                }
+                transactor.addTransaction(id);
+
                 tx.update(document, "transactionIds", transactor.getTransactionIds());
                 tx.update(document, "balance", transactor.getBalance() - bankTxn.getAmount());
-
+                
                 createFuture.get();
+                System.out.println("HELLO WORLD");
                 return "Transaction successful!";
             }
         });
@@ -113,6 +124,11 @@ public class TransactionRepository extends PBRepository {
                 String id = UUID.randomUUID().toString();
                 ApiFuture<WriteResult> createFuture = collection.document(id).create(peerTxn);
 
+
+                transactor.addTransaction(peerTxn.getId());
+                recipient.addTransaction(peerTxn.getId());
+                tx.update(transactorDoc, "transactionIds", transactor.getTransactionIds());
+                tx.update(recipientDoc, "transactionIds", recipient.getTransactionIds());
                 // Update transaction ID lists and balances in both the transactor and recipient documents.
                 transactor.getTransactionIds().add(id);
                 recipient.getTransactionIds().add(id);
