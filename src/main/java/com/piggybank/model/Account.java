@@ -1,5 +1,6 @@
 package com.piggybank.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,9 +31,9 @@ public class Account {
     private String email;
     private AccountType type;
     private String profilePictureUrl;
-    private Float balance;
+    private long balance;
     private BankAccount bankAccount;
-    private List<String> transactionIds;
+    private List<String> transactionIds = new ArrayList<>();
 
     // Default constructor needed for http requests.
     public Account() {}
@@ -81,11 +82,11 @@ public class Account {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public Float getBalance() {
+    public long getBalance() {
         return balance;
     }
 
-    public void setBalance(Float balance) {
+    public void setBalance(long balance) {
         this.balance = balance;
     }
 
@@ -103,10 +104,6 @@ public class Account {
 
     public void setTransactionIds(List<String> transactionIds) {
         this.transactionIds = transactionIds;
-    }
-
-    public void addTransaction(String txn) {
-        this.transactionIds.add(txn);
     }
 
     @Override

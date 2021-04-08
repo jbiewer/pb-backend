@@ -1,5 +1,7 @@
 package com.piggybank.model;
 
+import java.util.Objects;
+
 /**
  * todo
  */
@@ -12,7 +14,7 @@ public class Transaction {
     private String id;
     private String transactorEmail;
     private String recipientEmail; 
-    private float amount;
+    private long amount;
     private TransactionType type;
 
     public Transaction() {}
@@ -45,11 +47,11 @@ public class Transaction {
         this.recipientEmail = recipientEmail;
     }
 
-    public float getAmount() {
+    public long getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(long amount) {
         this.amount = amount;
     }
 
@@ -59,5 +61,22 @@ public class Transaction {
 
     public void setType(TransactionType type) {
         this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Transaction that = (Transaction) o;
+        return amount == that.amount &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(transactorEmail, that.transactorEmail) &&
+               Objects.equals(recipientEmail, that.recipientEmail) &&
+               type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, transactorEmail, recipientEmail, amount, type);
     }
 }

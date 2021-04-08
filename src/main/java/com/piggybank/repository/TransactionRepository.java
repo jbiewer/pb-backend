@@ -1,8 +1,6 @@
 package com.piggybank.repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.api.core.ApiFuture;
@@ -16,14 +14,20 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+/**
+ * todo
+ */
 @Repository
 public class TransactionRepository extends PBRepository {
     private final CollectionReference accountCollection;
 
+    /**
+     * todo
+     * @param env
+     */
     public TransactionRepository(Environment env) {
         super(Objects.requireNonNull(env.getProperty("firebase.database.labels.transactions")));
         String accountsLabel = Objects.requireNonNull(env.getProperty("firebase.database.labels.accounts"));
@@ -49,7 +53,7 @@ public class TransactionRepository extends PBRepository {
      * @throws Exception
      */
     @NonNull
-    public String bankTxn(@NonNull Transaction bankTxn) throws Exception {
+    public String processBankTxn(@NonNull Transaction bankTxn) throws Exception {
         if (bankTxn.getType() != Transaction.TransactionType.BANK) {
             throw new IllegalArgumentException("Transaction type does not match (must be type BANK)");
         }
@@ -60,28 +64,23 @@ public class TransactionRepository extends PBRepository {
             Account transactor = snapshot.toObject(Account.class);
 
             if (!snapshot.exists() || transactor == null) {
-                throw new IllegalArgumentException("Account associated with txn transactor doesn't exist.");
+                throw new IllegalArgumentException("Account associated with transactor doesn't exist");
             } else {
                 // Transaction amount can't be more than current balance
                 if (transactor.getBalance() < bankTxn.getAmount()) {
-                    throw new IllegalArgumentException("Transaction amount exceeds account balance!");
+                    throw new IllegalArgumentException("Transaction amount exceeds account balance");
                 }
 
-                String id = UUID.randomUUID().toString();
-                ApiFuture<WriteResult> createFuture = collection.document(id).create(bankTxn);
+                bankTxn.setId(UUID.randomUUID().toString());
 
                 // Add transaction ID to account's list and remove transaction amount from account's balance.
-                // transactor.getTransactionIds().add(id);
-                if(transactor.getTransactionIds() == null) {
-                    transactor.setTransactionIds(new ArrayList<String>());
-                }
-                transactor.addTransaction(id);
+                transactor.getTransactionIds().add(bankTxn.getId());
+                tx.update(document, new HashMap<>() {{
+                    put("transactionIds", transactor.getTransactionIds());
+                    put("balance", transactor.getBalance() - bankTxn.getAmount());
+                }});
 
-                tx.update(document, "transactionIds", transactor.getTransactionIds());
-                tx.update(document, "balance", transactor.getBalance() - bankTxn.getAmount());
-                
-                createFuture.get();
-                System.out.println("HELLO WORLD");
+                tx.create(collection.document(bankTxn.getId()), bankTxn);
                 return "Transaction successful!";
             }
         });
@@ -96,7 +95,7 @@ public class TransactionRepository extends PBRepository {
      * @throws Exception
      */
     @NonNull
-    public Object peerTxn(Transaction peerTxn) throws Exception {
+    public Object processPeerTxn(Transaction peerTxn) throws Exception {
         if (peerTxn.getType() != Transaction.TransactionType.PEER_TO_PEER) {
             throw new IllegalArgumentException("Transaction type does not match (must be type PEER_TO_PEER)");
         }
@@ -112,32 +111,30 @@ public class TransactionRepository extends PBRepository {
             Account recipient = recipientSnap.toObject(Account.class);
 
             if (!transactorSnap.exists() || transactor == null) {
-                throw new IllegalArgumentException("Account does not exist specified by the transactor email");
+                throw new IllegalArgumentException("Account associated with transactor doesn't exist");
             } else if (!recipientSnap.exists() || recipient == null) {
-                throw new IllegalArgumentException("Account does not exist specified by the recipient email");
+                throw new IllegalArgumentException("Account associated with recipient doesn't exist");
             } else {
                 // Transaction amount can't be more than current balance
                 if (transactor.getBalance() < peerTxn.getAmount()) {
-                    throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance!");
+                    throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance");
                 }
 
-                String id = UUID.randomUUID().toString();
-                ApiFuture<WriteResult> createFuture = collection.document(id).create(peerTxn);
+                peerTxn.setId(UUID.randomUUID().toString());
 
-
-                transactor.addTransaction(peerTxn.getId());
-                recipient.addTransaction(peerTxn.getId());
-                tx.update(transactorDoc, "transactionIds", transactor.getTransactionIds());
-                tx.update(recipientDoc, "transactionIds", recipient.getTransactionIds());
                 // Update transaction ID lists and balances in both the transactor and recipient documents.
-                transactor.getTransactionIds().add(id);
-                recipient.getTransactionIds().add(id);
-                tx.update(transactorDoc, "transactionIds", transactor.getTransactionIds());
-                tx.update(recipientDoc, "transactionIds", recipient.getTransactionIds());
-                tx.update(transactorDoc, "balance", transactor.getBalance() - peerTxn.getAmount());
-                tx.update(recipientDoc, "balance", recipient.getBalance() + peerTxn.getAmount());
+                transactor.getTransactionIds().add(peerTxn.getId());
+                recipient.getTransactionIds().add(peerTxn.getId());
+                tx.update(transactorDoc, new HashMap<>() {{
+                    put("transactionIds", transactor.getTransactionIds());
+                    put("balance", transactor.getBalance() - peerTxn.getAmount());
+                }});
+                tx.update(recipientDoc, new HashMap<>() {{
+                    put("transactionIds", recipient.getTransactionIds());
+                    put("balance", recipient.getBalance() + peerTxn.getAmount());
+                }});
 
-                createFuture.get();
+                tx.create(collection.document(peerTxn.getId()), peerTxn);
                 return "Transaction successful!";
             }
         });
@@ -155,8 +152,9 @@ public class TransactionRepository extends PBRepository {
     public Transaction getTxn(String txnId) throws Exception {
         for (DocumentReference document : collection.listDocuments()) {
             if (document.getId().equals(txnId)) {
-                Transaction txn = getApiFuture(document.get()).toObject(Transaction.class);
-                if (txn == null) {
+                DocumentSnapshot snap = document.get().get();
+                Transaction txn = snap.toObject(Transaction.class);
+                if (!snap.exists() || txn == null) {
                     break;
                 } else {
                     return txn;

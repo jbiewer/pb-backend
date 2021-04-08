@@ -1,21 +1,12 @@
 package com.piggybank.controller;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.piggybank.PiggyBankApplication;
-import com.piggybank.model.Account;
-import com.piggybank.model.BankAccount;
 import com.piggybank.model.Transaction;
-import com.piggybank.model.Account.AccountType;
-import com.piggybank.model.Transaction.TransactionType;
 import com.piggybank.repository.TransactionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.security.auth.message.AuthException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Bank account-related application interface.
@@ -55,7 +46,7 @@ public class TransactionController extends PBController<TransactionRepository> {
     ) {
         try {
             authenticator.validateSession(sessionCookieId);
-            return ResponseEntity.ok(repository.bankTxn(bankTxn));
+            return ResponseEntity.ok(repository.processBankTxn(bankTxn));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch(Exception e) {
@@ -71,7 +62,7 @@ public class TransactionController extends PBController<TransactionRepository> {
     ) {
         try  {
             authenticator.validateSession(sessionCookieId);
-            return ResponseEntity.ok(repository.peerTxn(bankTxn));
+            return ResponseEntity.ok(repository.processPeerTxn(bankTxn));
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
         } catch (Exception e) {

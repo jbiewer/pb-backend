@@ -3,63 +3,63 @@
         "id": "tx-id0", 
         "transactorEmail": "user1@email.com", 
         "recipientEmail": "jbiewer@wisc.edu", 
-        "amount": 69.0, 
+        "amount": 690,
         "type": "PEER_TO_PEER"
     }, 
     {
         "id": "tx-id1", 
         "transactorEmail": "user1@email.com", 
         "recipientEmail": null, 
-        "amount": 12.0, 
+        "amount": 120,
         "type": "BANK"  
     },
     {
         "id": "tx-id2", 
         "transactorEmail": "user1@email.com", 
         "recipientEmail": "jbiewer@wisc.edu", 
-        "amount": 2.0, 
+        "amount": 20,
         "type": "PEER_TO_PEER"
     },
     {
         "id": "tx-id3", 
         "transactorEmail": "user2@email.com", 
         "recipientEmail": "user1@email.com", 
-        "amount": 69.0, 
+        "amount": 690,
         "type": "PEER_TO_PEER"
     },
     {
         "id": "tx-id4", 
         "transactorEmail": "user2@email.com", 
         "recipientEmail": "user1@email.com", 
-        "amount": 12.0, 
+        "amount": 120,
         "type": "PEER_TO_PEER"
     },
     {
         "id": "tx-id5", 
         "transactorEmail": "user2@email.com", 
         "recipientEmail": "jbiewer@wisc.edu", 
-        "amount": 69.0, 
+        "amount": 690,
         "type": "PEER_TO_PEER"
     },
     {
         "id": "tx-id6", 
         "transactorEmail": "jbiewer@wisc.edu", 
         "recipientEmail": "user1@email.com", 
-        "amount": 69.0, 
+        "amount": 690,
         "type": "PEER_TO_PEER"
     },
     {
         "id": "tx-id7", 
         "transactorEmail": "jbiewer@wisc.edu", 
         "recipientEmail": null, 
-        "amount": 12.0, 
+        "amount": 120,
         "type": "BANK"
     },
     {
         "id": "tx-id8", 
         "transactorEmail": "jbiewer@wisc.edu", 
         "recipientEmail": "user1@email.com", 
-        "amount": 12.0, 
+        "amount": 120,
         "type": "PEER_TO_PEER"
     }
 ]

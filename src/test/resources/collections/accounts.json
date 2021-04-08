@@ -5,7 +5,7 @@
     "email": "user1@email.com",
     "type": "CUSTOMER",
     "profilePictureUrl": "/path/to/user1/pic.jpg",
-    "balance": 120.21,
+    "balance": 12021,
     "bankAccount": {
       "accountNumber": 12345,
       "routingNumber": 67890,
@@ -23,7 +23,7 @@
     "email": "user2@email.com",
     "type": "MERCHANT",
     "profilePictureUrl": "/path/to/user2/pic.jpg",
-    "balance": 420.69,
+    "balance": 42069,
     "bankAccount": {
       "accountNumber": 10100,
       "routingNumber": 20200,
@@ -41,7 +41,7 @@
     "email": "jbiewer@wisc.edu",
     "type": "CUSTOMER",
     "profilePictureUrl": "/path/to/jacobs/pic.jpg",
-    "balance": 0.01,
+    "balance": 1,
     "transactionIds": [
       "tx-id6",
       "tx-id7",

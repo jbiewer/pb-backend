@@ -1,9 +1,6 @@
 package com.piggybank.mocks;
 
-import com.piggybank.model.Account;
-import com.piggybank.model.BankAccount;
-import com.piggybank.model.Customer;
-import com.piggybank.model.Merchant;
+import com.piggybank.model.*;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -68,7 +65,7 @@ public abstract class MockModels {
         account.setPassword(UUID.randomUUID().toString());
         account.setEmail(UUID.randomUUID().toString());
         account.setProfilePictureUrl(UUID.randomUUID().toString());
-        account.setBalance(rand.nextFloat());
+        account.setBalance(rand.nextLong());
         account.setBankAccount(mockBankAccount());
         account.setTransactionIds(new ArrayList<>(0));
         return account;
@@ -85,5 +82,42 @@ public abstract class MockModels {
         account.setAccountNumber(rand.nextLong());
         account.setRoutingNumber(rand.nextLong());
         return account;
+    }
+
+    /**
+     * Creates a bank transaction with mock data.
+     *
+     * @param email Email of the transactor.
+     * @return Transaction with mock data.
+     */
+    public static Transaction mockBankTransaction(String email) {
+        return mockTransaction(email, null);
+    }
+
+    /**
+     * Creates a peer-to-peer transaction with mock data.
+     *
+     * @param from Email of the transactor.
+     * @param to Email of the recipient.
+     * @return Transaction with mock data.
+     */
+    public static Transaction mockPeerTransaction(String from, String to) {
+        return mockTransaction(from, to);
+    }
+
+    /**
+     * Creates a transaction with mock data.
+     *
+     * @param from Email of the transactor.
+     * @param to Email of the recipient.
+     * @return Transaction with mock data.
+     */
+    public static Transaction mockTransaction(String from, String to) {
+        Transaction txn = new Transaction(Transaction.TransactionType.BANK);
+        txn.setId(UUID.randomUUID().toString());
+        txn.setAmount(rand.nextLong());
+        txn.setTransactorEmail(from);
+        txn.setRecipientEmail(to);
+        return txn;
     }
 }

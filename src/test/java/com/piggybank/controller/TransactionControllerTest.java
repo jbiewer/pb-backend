@@ -6,8 +6,9 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.piggybank.components.SessionAuthenticator;
 import com.piggybank.model.Account;
 import com.piggybank.model.BankAccount;
-import com.piggybank.repository.AccountRepository;
+import com.piggybank.model.Transaction;
 import com.piggybank.repository.BankAccountRepository;
+import com.piggybank.repository.TransactionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,18 +20,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import javax.security.auth.message.AuthException;
 import javax.servlet.http.Cookie;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static com.piggybank.mocks.MockModels.mockAccount;
-import static com.piggybank.mocks.MockModels.mockBankAccount;
-import static com.piggybank.model.Account.AccountType;
+import static com.piggybank.mocks.MockModels.*;
 import static com.piggybank.util.FirebaseEmulatorServices.*;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -40,21 +41,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Unit-testing suite for all endpoints in the BankAccountController class.
+ * Unit-testing suite for all endpoints in the TransactionController class.
  * Runs a spring application and uses a mock MVC provided by Spring to make mock HTTP requests to the controller
  * endpoints. Mockito is used to inject mock objects to be used in the application context.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-public class BankAccountControllerTest {
+public class TransactionControllerTest {
     private static final String CUSTOMER_EMAIL = "user1@email.com";
+    private static final String MERCHANT_EMAIL = "user2@email.com";
+
+    private static final String VALID_TRANSACTION_ID = "tx-id0";
+    private static final String INVALID_TRANSACTION_ID = "invalid-txn-id";
+    private static final Transaction VALID_TRANSACTION = new ObjectMapper().convertValue(
+            new HashMap<>() {{ put("id", VALID_TRANSACTION_ID); }},
+            Transaction.class
+    );
 
     private static final String VALID_SESSION_ID = UUID.randomUUID().toString();
     private static final String INVALID_SESSION_ID = UUID.randomUUID().toString();
     private static final Cookie VALID_SESSION_COOKIE = new Cookie("session", VALID_SESSION_ID);
     private static final Cookie INVALID_SESSION_COOKIE = new Cookie("session", INVALID_SESSION_ID);
 
-    @MockBean private BankAccountRepository repository;
+    @MockBean private TransactionRepository repository;
     @MockBean private SessionAuthenticator authenticator;
 
     @Autowired private MockMvc mvc;
@@ -66,7 +75,7 @@ public class BankAccountControllerTest {
      * @return JSON string formatted version of the object.
      * @throws JsonProcessingException When an exception occurs trying to serialize the object.
      */
-    private String jsonOf(Object object) throws JsonProcessingException {
+    private static String jsonOf(Object object) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(object);
     }
 
@@ -97,7 +106,7 @@ public class BankAccountControllerTest {
 
         // Test
         try {
-            mvc.perform(get("/api/v1/bank/test"))
+            mvc.perform(get("/api/v1/transaction/test"))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Success! No message supplied"));
         } catch (Exception e) {
@@ -119,7 +128,7 @@ public class BankAccountControllerTest {
 
         // Test
         try {
-            mvc.perform(get("/api/v1/bank/test").content("test"))
+            mvc.perform(get("/api/v1/transaction/test").content("test"))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Success! Here is your message: test"));
         } catch (Exception e) {
@@ -141,7 +150,7 @@ public class BankAccountControllerTest {
 
         // Test
         try {
-            mvc.perform(get("/api/v1/bank/test").cookie(VALID_SESSION_COOKIE))
+            mvc.perform(get("/api/v1/transaction/test").cookie(VALID_SESSION_COOKIE))
                     .andExpect(status().isOk())
                     .andExpect(content().string("Success! No message supplied"));
         } catch (Exception e) {
@@ -164,7 +173,7 @@ public class BankAccountControllerTest {
 
         // Test
         try {
-            mvc.perform(get("/api/v1/bank/test").cookie(INVALID_SESSION_COOKIE))
+            mvc.perform(get("/api/v1/transaction/test").cookie(INVALID_SESSION_COOKIE))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
         } catch (Exception e) {
@@ -177,51 +186,49 @@ public class BankAccountControllerTest {
     }
 
     /**
-     * The update() endpoint should succeed w/ HTTP status 200 OK using a valid session ID and a fake bank account.
+     * The requestBankTransaction() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
      */
     @Test
-    public void updateSucceeds() throws Exception {
-        BankAccount bank = mockBankAccount();
+    public void requestBankTransactionSucceeds() throws Exception {
+        Transaction txn = mockBankTransaction(CUSTOMER_EMAIL);
 
         // Mock
         doNothing().when(authenticator).validateSession(VALID_SESSION_ID);
-        when(repository.update(CUSTOMER_EMAIL, bank)).thenReturn("Bank account successfully updated!");
+        when(repository.processBankTxn(txn)).thenReturn("Transaction successful!");
 
         // Test
-        MockHttpServletRequestBuilder request = put("/api/v1/bank/update")
-                .param("email", CUSTOMER_EMAIL)
+        MockHttpServletRequestBuilder request = post("/api/v1/transaction/bank")
                 .cookie(VALID_SESSION_COOKIE)
                 .contentType(MediaType.APPLICATION_JSON);
         try {
-            mvc.perform(request.content(jsonOf(bank)))
+            mvc.perform(request.content(jsonOf(txn)))
                     .andExpect(status().isOk())
-                    .andExpect(content().string("Bank account successfully updated!"));
+                    .andExpect(content().string("Transaction successful!"));
         } catch (Exception e) {
             fail(e);
         }
 
         // Verify
-        verify(repository, times(1)).update(CUSTOMER_EMAIL, bank);
+        verify(repository, times(1)).processBankTxn(txn);
         verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
-     * The update() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
+     * The requestBankTransaction() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
-    public void updateFailsInvalidSession() throws Exception {
-        BankAccount bank = mockBankAccount();
+    public void requestBankTransactionFailsInvalidSession() throws Exception {
+        Transaction txn = mockBankTransaction(CUSTOMER_EMAIL);
 
         // Mock
         doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
 
         // Test
-        MockHttpServletRequestBuilder request = put("/api/v1/bank/update")
-                .param("email", CUSTOMER_EMAIL)
+        MockHttpServletRequestBuilder request = post("/api/v1/transaction/bank")
                 .cookie(INVALID_SESSION_COOKIE)
                 .contentType(MediaType.APPLICATION_JSON);
         try {
-            mvc.perform(request.content(jsonOf(bank)))
+            mvc.perform(request.content(jsonOf(txn)))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
         } catch (Exception e) {
@@ -229,77 +236,81 @@ public class BankAccountControllerTest {
         }
 
         // Verify
-        verify(repository, never()).update(any(), any());
+        verify(repository, never()).processBankTxn(any());
         verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
     }
 
     /**
-     * The update() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
+     * The requestBankTransaction() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
      */
     @Test
-    public void updateFailsEmailNotFound() throws Exception {
+    public void requestBankTransactionFailsEmailNotFound() throws Exception {
         String invalidEmail = "not-a-valid-email";
-        BankAccount bank = mockBankAccount();
+        Transaction txn = mockBankTransaction(invalidEmail);
 
         // Mock
-        when(repository.update(invalidEmail, bank)).thenThrow(IllegalArgumentException.class);
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+        when(repository.processBankTxn(txn)).thenThrow(IllegalArgumentException.class);
 
         // Test
-        MockHttpServletRequestBuilder request = put("/api/v1/bank/update")
-                .param("email", invalidEmail)
+        MockHttpServletRequestBuilder request = post("/api/v1/transaction/bank")
                 .cookie(VALID_SESSION_COOKIE)
                 .contentType(MediaType.APPLICATION_JSON);
         try {
-            mvc.perform(request.content(jsonOf(bank))).andExpect(status().isBadRequest());
+            mvc.perform(request.content(jsonOf(txn))).andExpect(status().isBadRequest());
         } catch (Exception e) {
             fail(e);
         }
 
         // Verify
-        verify(repository, times(1)).update(invalidEmail, bank);
+        verify(repository, times(1)).processBankTxn(txn);
         verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
-     * The remove() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
+     * The requestPeerTransaction() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
      */
     @Test
-    public void removeSucceeds() throws Exception {
+    public void requestPeerTransactionSucceeds() throws Exception {
+        Transaction txn = mockPeerTransaction(MERCHANT_EMAIL, CUSTOMER_EMAIL);
+
         // Mock
         doNothing().when(authenticator).validateSession(VALID_SESSION_ID);
-        when(repository.remove(CUSTOMER_EMAIL)).thenReturn("Bank account successfully removed!");
+        when(repository.processPeerTxn(txn)).thenReturn("Transaction successful!");
 
         // Test
-        MockHttpServletRequestBuilder request = delete("/api/v1/bank/remove")
-                .param("email", CUSTOMER_EMAIL)
-                .cookie(VALID_SESSION_COOKIE);
+        MockHttpServletRequestBuilder request = post("/api/v1/transaction/peer")
+                .cookie(VALID_SESSION_COOKIE)
+                .contentType(MediaType.APPLICATION_JSON);
         try {
-            mvc.perform(request)
+            mvc.perform(request.content(jsonOf(txn)))
                     .andExpect(status().isOk())
-                    .andExpect(content().string("Bank account successfully removed!"));
+                    .andExpect(content().string("Transaction successful!"));
         } catch (Exception e) {
             fail(e);
         }
 
         // Verify
-        verify(repository, times(1)).remove(CUSTOMER_EMAIL);
+        verify(repository, times(1)).processPeerTxn(txn);
         verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
-     * The remove() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
+     * The requestPeerTransaction() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
-    public void removeFailsInvalidSession() throws Exception {
+    public void requestPeerTransactionFailsInvalidSession() throws Exception {
+        Transaction txn = mockPeerTransaction(MERCHANT_EMAIL, CUSTOMER_EMAIL);
+
         // Mock
         doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
 
         // Test
-        MockHttpServletRequestBuilder request = delete("/api/v1/bank/remove")
-                .param("email", CUSTOMER_EMAIL)
-                .cookie(INVALID_SESSION_COOKIE);
+        MockHttpServletRequestBuilder request = post("/api/v1/transaction/peer")
+                .cookie(INVALID_SESSION_COOKIE)
+                .contentType(MediaType.APPLICATION_JSON);
         try {
-            mvc.perform(request)
+            mvc.perform(request.content(jsonOf(txn)))
                     .andExpect(status().isUnauthorized())
                     .andExpect(content().string("Failed to validate session"));
         } catch (Exception e) {
@@ -307,23 +318,100 @@ public class BankAccountControllerTest {
         }
 
         // Verify
-        verify(repository, never()).update(any(), any());
+        verify(repository, never()).processPeerTxn(any());
         verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
     }
 
     /**
-     * The remove() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
+     * The requestBankTransaction() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
      */
     @Test
-    public void removeFailsEmailNotFound() throws Exception {
+    public void requestPeerTransactionFailsEmailNotFound() throws Exception {
         String invalidEmail = "not-a-valid-email";
+        Transaction txn = mockPeerTransaction(invalidEmail, CUSTOMER_EMAIL);
 
         // Mock
-        when(repository.remove(invalidEmail)).thenThrow(IllegalArgumentException.class);
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+        when(repository.processPeerTxn(txn)).thenThrow(IllegalArgumentException.class);
 
         // Test
-        MockHttpServletRequestBuilder request = delete("/api/v1/bank/remove")
-                .param("email", invalidEmail)
+        MockHttpServletRequestBuilder request = post("/api/v1/transaction/peer")
+                .cookie(VALID_SESSION_COOKIE)
+                .contentType(MediaType.APPLICATION_JSON);
+        try {
+            mvc.perform(request.content(jsonOf(txn))).andExpect(status().isBadRequest());
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        // Verify
+        verify(repository, times(1)).processPeerTxn(txn);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
+    }
+
+    /**
+     * The getSingleTransaction() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
+     */
+    @Test
+    public void getSingleTransactionSucceeds() throws Exception {
+        // Mock
+        doNothing().when(authenticator).validateSession(VALID_SESSION_ID);
+        when(repository.getTxn(VALID_TRANSACTION_ID)).thenReturn(VALID_TRANSACTION);
+
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/transaction/getSingleTransaction")
+                .param("txnId", VALID_TRANSACTION_ID)
+                .cookie(VALID_SESSION_COOKIE);
+        try {
+            mvc.perform(request)
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(jsonOf(VALID_TRANSACTION)));
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        // Verify
+        verify(repository, times(1)).getTxn(VALID_TRANSACTION_ID);
+        verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
+    }
+
+    /**
+     * The getSingleTransaction() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
+     */
+    @Test
+    public void getSingleTransactionFailsInvalidSession() throws Exception {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/transaction/getSingleTransaction")
+                .param("txnId", VALID_TRANSACTION_ID)
+                .cookie(INVALID_SESSION_COOKIE);
+        try {
+            mvc.perform(request)
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(content().string("Failed to validate session"));
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        // Verify
+        verify(repository, never()).getTxn(any());
+        verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
+    }
+
+    /**
+     * The getSingleTransaction() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
+     */
+    @Test
+    public void getSingleTransactionFailsTransactionNotFound() throws Exception {
+        // Mock
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+        when(repository.getTxn(INVALID_TRANSACTION_ID)).thenThrow(IllegalArgumentException.class);
+
+        // Test
+        MockHttpServletRequestBuilder request = get("/api/v1/transaction/getSingleTransaction")
+                .param("txnId", INVALID_TRANSACTION_ID)
                 .cookie(VALID_SESSION_COOKIE);
         try {
             mvc.perform(request).andExpect(status().isBadRequest());
@@ -332,47 +420,46 @@ public class BankAccountControllerTest {
         }
 
         // Verify
-        verify(repository, times(1)).remove(invalidEmail);
+        verify(repository, times(1)).getTxn(INVALID_TRANSACTION_ID);
         verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
-     * The get() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
+     * The getAllTransactionsFromUser() endpoint should succeed w/ HTTP status 200 OK using a valid session ID.
      */
     @Test
-    public void getSucceeds() throws Exception {
-        BankAccount bank = getFromFirestore("Accounts", CUSTOMER_EMAIL, Account.class).getBankAccount();
-
+    public void getAllTransactionsFromUserSucceeds() throws Exception {
         // Mock
-        when(repository.get(CUSTOMER_EMAIL)).thenReturn(bank);
+        doNothing().when(authenticator).validateSession(VALID_SESSION_ID);
+        when(repository.getAllTxnFromUser(CUSTOMER_EMAIL)).thenReturn(new ArrayList<>());
 
         // Test
-        MockHttpServletRequestBuilder request = get("/api/v1/bank/get")
+        MockHttpServletRequestBuilder request = get("/api/v1/transaction/getAllFromUser")
                 .param("email", CUSTOMER_EMAIL)
                 .cookie(VALID_SESSION_COOKIE);
         try {
             mvc.perform(request)
                     .andExpect(status().isOk())
-                    .andExpect(content().string(jsonOf(bank)));
+                    .andExpect(content().json(jsonOf(new ArrayList<>())));
         } catch (Exception e) {
             fail(e);
         }
 
         // Verify
-        verify(repository, times(1)).get(CUSTOMER_EMAIL);
+        verify(repository, times(1)).getAllTxnFromUser(CUSTOMER_EMAIL);
         verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 
     /**
-     * The get() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
+     * The getAllTransactionsFromUser() endpoint should fail w/ HTTP status 401 UNAUTHORIZED because the session ID is invalid.
      */
     @Test
-    public void getFailsInvalidSession() throws Exception {
+    public void getAllTransactionsFromUserFailsInvalidSession() throws Exception {
         // Mock
         doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
 
         // Test
-        MockHttpServletRequestBuilder request = get("/api/v1/bank/get")
+        MockHttpServletRequestBuilder request = get("/api/v1/transaction/getAllFromUser")
                 .param("email", CUSTOMER_EMAIL)
                 .cookie(INVALID_SESSION_COOKIE);
         try {
@@ -384,23 +471,23 @@ public class BankAccountControllerTest {
         }
 
         // Verify
-        verify(repository, never()).get(any());
+        verify(repository, never()).getAllTxnFromUser(any());
         verify(authenticator, times(1)).validateSession(INVALID_SESSION_ID);
     }
 
     /**
-     * The get() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid (not found).
+     * The getAllTransactionsFromUser() endpoint should fail w/ HTTP status 400 BAD REQUEST because the email is invalid
+     * (not found).
      */
     @Test
-    public void getFailsEmailNotFound() throws Exception {
-        String invalidEmail = "invalid-email";
-
+    public void getAllTransactionsFromUserFailsTransactionNotFound() throws Exception {
         // Mock
-        when(repository.get(invalidEmail)).thenThrow(IllegalArgumentException.class);
+        doThrow(FirebaseAuthException.class).when(authenticator).validateSession(INVALID_SESSION_ID);
+        when(repository.getAllTxnFromUser(CUSTOMER_EMAIL)).thenThrow(IllegalArgumentException.class);
 
         // Test
-        MockHttpServletRequestBuilder request = get("/api/v1/bank/get")
-                .param("email", invalidEmail)
+        MockHttpServletRequestBuilder request = get("/api/v1/transaction/getAllFromUser")
+                .param("email", CUSTOMER_EMAIL)
                 .cookie(VALID_SESSION_COOKIE);
         try {
             mvc.perform(request).andExpect(status().isBadRequest());
@@ -409,7 +496,7 @@ public class BankAccountControllerTest {
         }
 
         // Verify
-        verify(repository, times(1)).get(invalidEmail);
+        verify(repository, times(1)).getAllTxnFromUser(CUSTOMER_EMAIL);
         verify(authenticator, times(1)).validateSession(VALID_SESSION_ID);
     }
 }
