@@ -59,6 +59,9 @@ public class TransactionRepository extends PBRepository {
         if (bankTxn.getType() != Transaction.TransactionType.BANK) {
             throw new IllegalArgumentException("Transaction type does not match (must be type BANK)");
         }
+        if (bankTxn.getAmount() == null) {
+            throw new IllegalArgumentException("Amount not specified");
+        }
 
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             DocumentReference document = accountCollection.document(bankTxn.getTransactorEmail());
@@ -101,6 +104,9 @@ public class TransactionRepository extends PBRepository {
     public Object processPeerTxn(Transaction peerTxn) throws Exception {
         if (peerTxn.getType() != Transaction.TransactionType.PEER_TO_PEER) {
             throw new IllegalArgumentException("Transaction type does not match (must be type PEER_TO_PEER)");
+        }
+        if (peerTxn.getAmount() == null) {
+            throw new IllegalArgumentException("Amount not specified");
         }
 
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {

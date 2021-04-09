@@ -3,7 +3,7 @@ package com.piggybank.model;
 import java.util.Objects;
 
 /**
- * todo
+ * Represents how a transaction is structured in Firestore.
  */
 public class Transaction {
     public enum TransactionType {
@@ -14,7 +14,7 @@ public class Transaction {
     private String id;
     private String transactorEmail;
     private String recipientEmail; 
-    private long amount;
+    private Long amount;
     private TransactionType type;
 
     public Transaction() {}
@@ -47,11 +47,11 @@ public class Transaction {
         this.recipientEmail = recipientEmail;
     }
 
-    public long getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
-    public void setAmount(long amount) {
+    public void setAmount(Long amount) {
         this.amount = amount;
     }
 
@@ -68,7 +68,7 @@ public class Transaction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Transaction that = (Transaction) o;
-        return amount == that.amount &&
+        return Objects.equals(amount, that.amount) &&
                Objects.equals(id, that.id) &&
                Objects.equals(transactorEmail, that.transactorEmail) &&
                Objects.equals(recipientEmail, that.recipientEmail) &&

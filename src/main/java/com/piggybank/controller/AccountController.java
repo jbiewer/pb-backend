@@ -137,14 +137,13 @@ public class AccountController extends PBController<AccountRepository> {
      *
      * Takes in session cookie and, if valid, clears the user's session
      * and revokes cookie. If not a valid cookie or has already been revoked, returns error
-     * 
      *
      * Example:
      *   curl -X POST URL/api/v1/account/log-out
      *        -H '{
-     *              'Content-Type': 'application/json', 
-     *              'Cookie': {sessionCookieId}
-     *             }'
+     *              'Content-Type: application/json',
+     *              'Cookie: {sessionCookieId}'
+     *            }'
      *
      * @param sessionCookieId - user's session cookie ID
      * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing a success message.
@@ -167,24 +166,23 @@ public class AccountController extends PBController<AccountRepository> {
     /**
      * Type: PUT
      * Path: /api/v1/account/update
-     * Body: new Account object.
+     * Body: New Account object.
      *
      * Takes in an account serialized object and an email address and updates
      * the account linked to the email address with every non-null field in the 
-     * new Account object. Email must be linked to a valid acccount, and cookie must be valid
+     * new Account object. Email must be linked to a valid account, and cookie must be valid
      * 
      * Example:
-     *   curl -X POST URL/api/v1/account/update?token={token}
+     *   curl -X PUT URL/api/v1/account/update?token={token}
      *        -H '{
-     *              'Content-Type':'application/json',
-     *              'Cookie': {sessionCookieId}
+     *              'Content-Type: application/json',
+     *              'Cookie: {sessionCookieId}'
      *            }'
      *        -d '{
      *              "username": "abcde",
-     *              "password": "null",
      *              "email": "email@email.com",
      *              "type": "CUSTOMER",
-     *                  ...
+     *              ...
      *            }'
      *
      * @param email - email of account to be updated
@@ -217,13 +215,12 @@ public class AccountController extends PBController<AccountRepository> {
      * Takes in account email and session cookie; if both valid, returns account object
      * associated with that email. Sensitive information such as password and list
      * of transactions are excluded (set to null) from the returned Account object. 
-     * 
      *
      * Example:
      *   curl -X POST URL/api/v1/account/get?email={email}
      *        -H '{
-     *              'Content-Type': 'application/json', 
-     *              'Cookie': {sessionCookieId}
+     *              'Content-Type: application/json',
+     *              'Cookie: {sessionCookieId}'
      *             }'
      *
      * @param email - email of desired account

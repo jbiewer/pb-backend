@@ -70,7 +70,7 @@ public class TransactionRepositoryTest {
         // User1 sends $10 to their bank.
         Transaction txn = new Transaction(Transaction.TransactionType.BANK);
         txn.setTransactorEmail("user1@email.com");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             long initialBalance = accRepository.get("user1@email.com").getBalance();
@@ -91,13 +91,32 @@ public class TransactionRepositoryTest {
         // User1 sends $10 to their bank.
         Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
         txn.setTransactorEmail("user1@email.com");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             txnRepository.processBankTxn(txn);
             fail("IllegalArgumentException not thrown when it should have.");
         } catch (IllegalArgumentException e) {
             assertEquals("Transaction type does not match (must be type BANK)", e.getMessage());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * The processesBankTxn() method fails since the amount was not specified.
+     */
+    @Test
+    public void processBankTxnFailsNoAmount() {
+        // User1 sends $10 to their bank.
+        Transaction txn = new Transaction(Transaction.TransactionType.BANK);
+        txn.setTransactorEmail("user1@email.com");
+
+        try {
+            txnRepository.processBankTxn(txn);
+            fail("IllegalArgumentException not thrown when it should have.");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Amount not specified", e.getMessage());
         } catch (Exception e) {
             fail(e);
         }
@@ -111,7 +130,7 @@ public class TransactionRepositoryTest {
         // User1 sends $10 to their bank.
         Transaction txn = new Transaction(Transaction.TransactionType.BANK);
         txn.setTransactorEmail("invalid-email");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             txnRepository.processBankTxn(txn);
@@ -131,7 +150,7 @@ public class TransactionRepositoryTest {
         // User1 sends $10 to their bank.
         Transaction txn = new Transaction(Transaction.TransactionType.BANK);
         txn.setTransactorEmail("jbiewer@wisc.edu");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             txnRepository.processBankTxn(txn);
@@ -152,7 +171,7 @@ public class TransactionRepositoryTest {
         Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
         txn.setTransactorEmail("user2@email.com");
         txn.setRecipientEmail("user1@email.com");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             long user1InitialBalance = accRepository.get("user1@email.com").getBalance();
@@ -179,13 +198,32 @@ public class TransactionRepositoryTest {
         Transaction txn = new Transaction(Transaction.TransactionType.BANK);
         txn.setTransactorEmail("user2@email.com");
         txn.setRecipientEmail("user1@email.com");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             txnRepository.processPeerTxn(txn);
             fail("IllegalArgumentException not thrown when it should have.");
         } catch (IllegalArgumentException e) {
             assertEquals("Transaction type does not match (must be type PEER_TO_PEER)", e.getMessage());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * The processesPeerTxn() method fails since the amount was not specified.
+     */
+    @Test
+    public void processPeerTxnFailsNoAmount() {
+        // User1 sends $10 to their bank.
+        Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
+        txn.setTransactorEmail("user1@email.com");
+
+        try {
+            txnRepository.processPeerTxn(txn);
+            fail("IllegalArgumentException not thrown when it should have.");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Amount not specified", e.getMessage());
         } catch (Exception e) {
             fail(e);
         }
@@ -200,12 +238,12 @@ public class TransactionRepositoryTest {
         Transaction nullTransactorTxn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
         nullTransactorTxn.setTransactorEmail("invalid-email");
         nullTransactorTxn.setRecipientEmail("user1@email.com");
-        nullTransactorTxn.setAmount(1000);
+        nullTransactorTxn.setAmount(1000L);
 
         Transaction nullRecipientTxn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
         nullRecipientTxn.setTransactorEmail("user2@email.com");
         nullRecipientTxn.setRecipientEmail("invalid-email");
-        nullRecipientTxn.setAmount(1000);
+        nullRecipientTxn.setAmount(1000L);
 
         try {
             txnRepository.processPeerTxn(nullTransactorTxn);
@@ -235,7 +273,7 @@ public class TransactionRepositoryTest {
         Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
         txn.setTransactorEmail("jbiewer@wisc.edu");
         txn.setRecipientEmail("user1@email.com");
-        txn.setAmount(1000);
+        txn.setAmount(1000L);
 
         try {
             txnRepository.processPeerTxn(txn);

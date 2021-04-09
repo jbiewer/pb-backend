@@ -3,7 +3,7 @@ package com.piggybank.util;
 import java.util.function.Function;
 
 /**
- * todo
+ *
  * @param <O>
  */
 public class Action<O> {
