@@ -16,8 +16,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.StreamSupport;
 
 import static com.piggybank.model.Account.AccountType;
-import static com.piggybank.util.Util.ifNonNull;
-import static com.piggybank.util.Util.ifNull;
 
 /**
  * Interface for database interactions for accounts.
@@ -58,13 +56,14 @@ public class AccountRepository extends PBRepository {
      *                                  or if the account type is MERCHANT but the bank account is not specified.
      * @throws Exception For any internal error.
      */
+    @NonNull
     public String create(@NonNull Account newAccount) throws Exception {
-        ifNull(newAccount.getType()).thenThrow(new IllegalArgumentException("Must specify account type"));
+        if (newAccount.getType() == null) { throw new IllegalArgumentException("Must specify account type"); }
         if (newAccount.getType() == AccountType.MERCHANT) {
-            ifNull(newAccount.getBankAccount()).thenThrow(new IllegalArgumentException("Merchant account must have a bank account"));
+            if (newAccount.getBankAccount() == null) { throw new IllegalArgumentException("Merchant account must have a bank account"); }
         }
-        ifNull(newAccount.getEmail()).thenThrow(new IllegalArgumentException("Must specify account email"));
-        ifNull(newAccount.getPassword()).thenThrow(new IllegalArgumentException("Must specify account password"));
+        if (newAccount.getEmail() == null) { throw new IllegalArgumentException("Must specify account email"); }
+        if (newAccount.getPassword() == null) { throw new IllegalArgumentException("Must specify account password"); }
 
         //create document where id = email
         getApiFuture(collection.document(newAccount.getEmail()).create(newAccount));
@@ -83,6 +82,7 @@ public class AccountRepository extends PBRepository {
      *                                  match the one found in Firestore.
      * @throws Exception When an unexpected exception occurs.
      */
+    @NonNull
     public String login(@NonNull String email, @NonNull String password) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             // Confirm account exists.
@@ -114,6 +114,7 @@ public class AccountRepository extends PBRepository {
      * @throws IllegalArgumentException When an account with the email doesn't exist.
      * @throws Exception When an unexpected exception occurs.
      */
+    @NonNull
     public String update(@NonNull String email, @NonNull Account content) throws Exception {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             String currentEmail = email;
@@ -137,9 +138,9 @@ public class AccountRepository extends PBRepository {
             for (Field declaredField : Account.class.getDeclaredFields()) {
                 boolean accessible = declaredField.canAccess(content);
                 declaredField.setAccessible(true);
-                ifNonNull(declaredField.get(content)).then(value ->
-                    tx.update(document, declaredField.getName(), value)
-                );
+                if (declaredField.get(content) != null) {
+                    tx.update(document, declaredField.getName(), declaredField.get(content));
+                }
                 declaredField.setAccessible(accessible);
             }
             return "Account successfully updated!";
@@ -157,6 +158,7 @@ public class AccountRepository extends PBRepository {
      * @throws IllegalArgumentException When an account with the email doesn't exist.
      * @throws Exception When an unexpected exception occurs.
      */
+    @NonNull
     public Account get(String email) throws Exception {
         ApiFuture<Account> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(collection.document(email)).get();
@@ -181,6 +183,7 @@ public class AccountRepository extends PBRepository {
      * @return True if an account with that username exists, false otherwise.
      * @throws Exception When an unexpected exception occurs.
      */
+    @NonNull
     public boolean usernameExists(String username) throws Exception {
         ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             // Using a parallel stream, check if any document has the username specified.

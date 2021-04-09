@@ -20,15 +20,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
- * todo
+ * Interface for database interactions for transactions.
  */
 @Repository
 public class TransactionRepository extends PBRepository {
     private final CollectionReference accountCollection;
 
     /**
-     * todo
-     * @param env
+     * Initializes the collection reference to the value at the specified property location
+     * in application.yml.
+     *
+     * @param env Environment containing properties.
      */
     public TransactionRepository(Environment env) {
         super(Objects.requireNonNull(env.getProperty("firebase.database.labels.transactions")));
@@ -37,9 +39,9 @@ public class TransactionRepository extends PBRepository {
     }
 
     /**
-     * todo
-     * @param message
-     * @return
+     * Tests the TransactionController interface.
+     *
+     * @return Success message.
      */
     @NonNull
     public String test(String message) {
@@ -49,10 +51,15 @@ public class TransactionRepository extends PBRepository {
     }
 
     /**
-     * todo
-     * @param bankTxn
-     * @return
-     * @throws Exception
+     * Processes a bank transaction by taking the amount specified by the transaction object and negating it from
+     * the account (represented by the transactor email) and then transferring it to the account's bank account.
+     *
+     * @param bankTxn Bank transaction information.
+     * @return Message indicating success.
+     * @throws IllegalArgumentException When the transaction type is not of type BANK, the amount is not specified,
+     *                                  the account w/ email 'transactorEmail' does not exist, or the amount in the
+     *                                  transaction exceeds the account's balance.
+     * @throws Exception For any internal error.
      */
     @NonNull
     public String processBankTxn(@NonNull Transaction bankTxn) throws Exception {
@@ -95,10 +102,16 @@ public class TransactionRepository extends PBRepository {
     }
 
     /**
-     * todo
-     * @param peerTxn
-     * @return
-     * @throws Exception
+     * Processes a peer-to-peer transaction by taking the amount specified by the transaction object and negating it
+     * from the account represented by the transactor email and adding to the account represented by the recipient email.
+     *
+     * @param peerTxn Peer-to-peer transaction information.
+     * @return Message indicating success.
+     * @throws IllegalArgumentException When the transaction type is not of type PEER_TO_PEER, the amount is not
+     *                                  specified, the account w/ email 'transactorEmail' does not exist, the account
+     *                                  w/ email 'recipientEmail' does not exist, or the amount in the transaction
+     *                                  exceeds the transacting account's balance.
+     * @throws Exception For any internal error.
      */
     @NonNull
     public Object processPeerTxn(Transaction peerTxn) throws Exception {
@@ -152,10 +165,12 @@ public class TransactionRepository extends PBRepository {
     }
 
     /**
-     * todo
-     * @param txnId
-     * @return
-     * @throws Exception
+     * Retrieves a transaction given the ID of the transaction.
+     *
+     * @param txnId ID of the transaction to retrieve.
+     * @return Message indicating success.
+     * @throws IllegalArgumentException When the transaction w/ the specified ID doesn't exist.
+     * @throws Exception For any internal error.
      */
     @NonNull
     public Transaction getTxn(String txnId) throws Exception {
@@ -170,15 +185,17 @@ public class TransactionRepository extends PBRepository {
                 }
             }
         }
-
         throw new IllegalArgumentException("Transaction with that ID doesn't exist");
     }
 
     /**
-     * todo
-     * @param email
-     * @return
-     * @throws Exception
+     * Retrieves a list of transactions where the IDs of each are contained in the transactionIds field of
+     * the account represented by the email specified.
+     *
+     * @param email Email of the account to get the list of transaction IDs from.
+     * @return Message indicating success.
+     * @throws IllegalArgumentException When the account with the specified email doesn't exist.
+     * @throws Exception For any internal error.
      */
     @NonNull
     public List<Transaction> getAllTxnFromUser(String email) throws Exception {

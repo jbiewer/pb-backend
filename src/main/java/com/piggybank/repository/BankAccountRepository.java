@@ -1,12 +1,7 @@
 package com.piggybank.repository;
 
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldMask;
-import com.google.cloud.firestore.FieldPath;
-import com.google.cloud.firestore.WriteResult;
-import com.google.firebase.cloud.FirestoreClient;
-import com.piggybank.model.Account;
 import com.piggybank.model.BankAccount;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
@@ -15,10 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-
-import static com.piggybank.util.Util.ifNonNull;
 
 /**
  * Interface for database interactions for bank accounts.
