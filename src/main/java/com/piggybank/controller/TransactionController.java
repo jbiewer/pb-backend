@@ -39,6 +39,12 @@ public class TransactionController extends PBController<TransactionRepository> {
         }
     }
 
+    /**
+     * todo
+     * @param bankTxn
+     * @param sessionCookieId
+     * @return
+     */
     @PostMapping(BASE_URL + "bank")
     public ResponseEntity<?> requestBankTransaction(
         @RequestBody Transaction bankTxn, 
@@ -55,6 +61,12 @@ public class TransactionController extends PBController<TransactionRepository> {
         
     }
 
+    /**
+     * todo
+     * @param bankTxn
+     * @param sessionCookieId
+     * @return
+     */
     @PostMapping(BASE_URL + "peer")
     public ResponseEntity<?> requestPeerTransaction(
         @RequestBody Transaction bankTxn, 
@@ -71,6 +83,12 @@ public class TransactionController extends PBController<TransactionRepository> {
         
     }
 
+    /**
+     * todo
+     * @param txnId
+     * @param sessionCookieId
+     * @return
+     */
     @GetMapping(BASE_URL + "getSingleTransaction")
     public ResponseEntity<?> getSingleTransaction(
         @RequestParam String txnId, 
@@ -86,6 +104,12 @@ public class TransactionController extends PBController<TransactionRepository> {
         }
     }
 
+    /**
+     * todo
+     * @param email
+     * @param sessionCookieId
+     * @return
+     */
     @GetMapping(BASE_URL + "getAllFromUser")
     public ResponseEntity<?> getAllTransactionsFromUser(
         @RequestParam String email, 

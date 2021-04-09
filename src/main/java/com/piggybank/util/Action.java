@@ -2,10 +2,19 @@ package com.piggybank.util;
 
 import java.util.function.Function;
 
+/**
+ * todo
+ * @param <O>
+ */
 public class Action<O> {
     private final O object;
     private final boolean doNothing;
 
+    /**
+     * todo
+     * @param <E>
+     * @return
+     */
     public static <E> Action<E> doNothing() {
         return new Action<>(true);
     }

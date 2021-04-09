@@ -3,8 +3,6 @@ package com.piggybank.repository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.cloud.FirestoreClient;
 import com.piggybank.model.Account;
 import org.springframework.core.env.Environment;
@@ -13,9 +11,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.StreamSupport;
 
@@ -193,22 +189,12 @@ public class AccountRepository extends PBRepository {
                         try {
                             return document.get().get();
                         } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
                             return null;
                         }
                     })
                     .filter(Objects::nonNull)
                     .anyMatch(snap -> username.equals(snap.get("username")));
-
-            //get all account documents in db todo
-//            ApiFuture<QuerySnapshot> orderFuture = collection.get();
-//            List<QueryDocumentSnapshot> orderDocuments = orderFuture.get().getDocuments();
-            //return true if one of the docs' matches input username
-//            for (QueryDocumentSnapshot doc: orderDocuments) {
-//                if (doc.toObject(Account.class).getUsername().equals(username)) {
-//                    return true;
-//                }
-//            }
-//            return false;
         });
 
         return getApiFuture(futureTx);
