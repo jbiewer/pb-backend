@@ -25,9 +25,9 @@ To run the testing suite, follow the **Testing** section on how to set up your e
 
 ### Linking Application to Firebase
 
-In the Firebase console, go to the settings and click on the 'Service accounts' tab. You'll need to 'Generate 
-a new private key' (button on the bottom) and store it locally as `secret/pb-firebase-pk.json`. When the application
-is executed, the build script will assign the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to that file.
+In the Firebase console, go to the settings and click on the 'Service accounts' tab. You'll need to 'Generate a new
+private key' (button on the bottom) and store it locally as `secret/pb-firebase-pk.json`. When the application is executed,
+the build script will assign the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of that file.
 
 
 ### Testing
@@ -44,7 +44,7 @@ Once that is installed, execute the following:
 
 The most recent test results can be viewed from the browser by opening the following URI:
 
-`file://<canonical_path_to_repo>/build/reports/tests/test/index.html`
+`file://<path_to_repo>/build/reports/tests/test/index.html`
 
 To see code coverage, execute the following:
 
@@ -52,7 +52,7 @@ To see code coverage, execute the following:
 
 The most recent code coverage report can be viewed from the browser by opening the following URI:
 
-`file://<canonical_path_to_repo>/build/reports/tests/test/index.html`
+`file://<path_to_repo>/build/reports/tests/test/index.html`
 
 
 ### Session management
