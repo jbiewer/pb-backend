@@ -119,7 +119,7 @@ public class AccountRepository extends PBRepository {
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             String currentEmail = email;
 
-            // Copy document over to newly labelled document, if new username was specified.
+            // Copy document over to newly labelled document, if new email was specified.
             if (content.getEmail() != null && !content.getEmail().equals(email)) {
                 DocumentSnapshot snapshot = tx.get(collection.document(email)).get();
                 if (snapshot.exists() && snapshot.getData() != null) {
@@ -138,8 +138,15 @@ public class AccountRepository extends PBRepository {
             for (Field declaredField : Account.class.getDeclaredFields()) {
                 boolean accessible = declaredField.canAccess(content);
                 declaredField.setAccessible(true);
-                if (declaredField.get(content) != null) {
-                    tx.update(document, declaredField.getName(), declaredField.get(content));
+                //balance field's default value is 0 (not null), so set to -1 if don't want to update balance
+                if (declaredField.getName().equals("balance")) {
+                    if (!declaredField.get(content).toString().equals("-1")) {
+                        tx.update(document, declaredField.getName(), declaredField.get(content));
+                    }   
+                } else {
+                    if (declaredField.get(content) != null) {
+                        tx.update(document, declaredField.getName(), declaredField.get(content));
+                    }
                 }
                 declaredField.setAccessible(accessible);
             }

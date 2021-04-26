@@ -173,7 +173,7 @@ public class AccountController extends PBController<AccountRepository> {
      * new Account object. Email must be linked to a valid account, and cookie must be valid
      * 
      * Example:
-     *   curl -X PUT URL/api/v1/account/update?token={token}
+     *   curl -X PUT URL/api/v1/account/update?email={email}
      *        -H '{
      *              'Content-Type: application/json',
      *              'Cookie: {sessionCookieId}'
