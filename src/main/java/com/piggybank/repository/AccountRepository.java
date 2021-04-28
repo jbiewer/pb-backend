@@ -64,7 +64,7 @@ public class AccountRepository extends PBRepository {
         }
         if (newAccount.getEmail() == null) { throw new IllegalArgumentException("Must specify account email"); }
         if (newAccount.getPassword() == null) { throw new IllegalArgumentException("Must specify account password"); }
-
+        if (usernameExists(newAccount.getUsername())) { throw new IllegalArgumentException("Account with this username already exists"); }
         //create document where id = email
         getApiFuture(collection.document(newAccount.getEmail()).create(newAccount));
         return "Account created successfully!";
