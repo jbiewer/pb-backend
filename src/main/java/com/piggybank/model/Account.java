@@ -31,7 +31,7 @@ public class Account {
     private String email;
     private AccountType type;
     private String profilePictureUrl;
-    private Long balance;
+    private long balance;
     private BankAccount bankAccount;
     private List<String> transactionIds = new ArrayList<>();
 
@@ -82,11 +82,11 @@ public class Account {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public Long getBalance() {
+    public long getBalance() {
         return balance;
     }
 
-    public void setBalance(Long balance) {
+    public void setBalance(long balance) {
         this.balance = balance;
     }
 
