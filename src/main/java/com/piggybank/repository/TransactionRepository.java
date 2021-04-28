@@ -12,10 +12,7 @@ import com.piggybank.model.Transaction;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -156,19 +153,20 @@ public class TransactionRepository extends PBRepository {
             // Update transaction ID lists and balances in both the transactor and recipient documents.
             transactor.getTransactionIds().add(peerTxn.getId());
             recipient.getTransactionIds().add(peerTxn.getId());
+            Map<String, Object> transactorFields = new HashMap<>() {{
+                put("transactionIds", transactor.getTransactionIds());
+            }};
             if (transactor.getType() == AccountType.CUSTOMER) {
                 // Transaction amount can't be more than current balance
                 if (transactor.getBalance() < peerTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance");
                 }
-                tx.update(transactorDoc, new HashMap<>() {{
-                    put("transactionIds", transactor.getTransactionIds());
-                    put("balance", transactor.getBalance() - peerTxn.getAmount());
-                }});
+                transactorFields.put("balance", transactor.getBalance() - peerTxn.getAmount());
             } else {
                 // This is where we would transfer from merchant's bank account to the customer's balance.
                 // Can't legally do this yet. :(
             }
+            tx.update(transactorDoc, transactorFields);
             tx.update(recipientDoc, new HashMap<>() {{
                 put("transactionIds", recipient.getTransactionIds());
                 put("balance", recipient.getBalance() + peerTxn.getAmount());
