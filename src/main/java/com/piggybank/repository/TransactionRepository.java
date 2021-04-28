@@ -151,17 +151,16 @@ public class TransactionRepository extends PBRepository {
                 throw new IllegalArgumentException("Recipient can only be a customer");
             }
 
-            // Transaction amount can't be more than current balance
-            if (transactor.getBalance() < peerTxn.getAmount()) {
-                throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance");
-            }
-
             peerTxn.setId(UUID.randomUUID().toString());
 
             // Update transaction ID lists and balances in both the transactor and recipient documents.
             transactor.getTransactionIds().add(peerTxn.getId());
             recipient.getTransactionIds().add(peerTxn.getId());
             if (transactor.getType() == AccountType.CUSTOMER) {
+                // Transaction amount can't be more than current balance
+                if (transactor.getBalance() < peerTxn.getAmount()) {
+                    throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance");
+                }
                 tx.update(transactorDoc, new HashMap<>() {{
                     put("transactionIds", transactor.getTransactionIds());
                     put("balance", transactor.getBalance() - peerTxn.getAmount());
