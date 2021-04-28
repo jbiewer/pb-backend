@@ -243,36 +243,4 @@ public class AccountController extends PBController<AccountRepository> {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-
-    /**
-     * Type: GET
-     * Path: /api/v1/account/usernameExists
-     *
-     * Takes in username as parameter and checks if an account
-     * with that username already exists. Returns a boolean indicating this. 
-     *
-     * Example:
-     *   curl -X POST URL/api/v1/account/usernameExists?username={username}
-     *
-     * @param username - username we want to check 
-     * @return - If all parameters are valid, an HTTP response w/ status 200 OK containing true if an account with
-     *           that username exists, false if it doesn't.
-     *           If an internal error occurs, an HTTP response w/ status 500 INTERNAL SERVER ERROR.
-     *           If the session ID is invalid, an HTTP response w/ status 401 UNAUTHORIZED.
-     
-     */
-    // @GetMapping(BASE_URL + "usernameExists")
-    // public ResponseEntity<?> usernameExists(
-    //         @RequestParam String username,
-    //         @CookieValue(value = "session") String sessionCookieId
-    // ) {
-    //     try {
-    //         authenticator.validateSession(sessionCookieId);
-    //         return ResponseEntity.ok(repository.usernameExists(username));
-    //     } catch (FirebaseAuthException e) {
-    //         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to validate session");
-    //     } catch (Exception e) {
-    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-    //     }
-    // }
 }

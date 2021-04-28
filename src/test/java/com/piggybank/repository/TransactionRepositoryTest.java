@@ -163,10 +163,38 @@ public class TransactionRepositoryTest {
     }
 
     /**
-     *
+     * The processPeerTxn() method succeeds transferring from a customer's account to another customer's
+     * account.
      */
     @Test
-    public void processPeerTxnSucceeds() {
+    public void processPeerTxnSucceedsCustomerToCustomer() {
+        // User1 sends $1 to Jacob
+        Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
+        txn.setTransactorEmail("user1@email.com");
+        txn.setRecipientEmail("jbiewer@wisc.edu");
+        txn.setAmount(100L);
+
+        try {
+            long user1InitialBalance = accRepository.get("user1@email.com").getBalance();
+            long jbiewerInitialBalance = accRepository.get("jbiewer@wisc.edu").getBalance();
+            txnRepository.processPeerTxn(txn);
+            long user1FinalBalance = accRepository.get("user1@email.com").getBalance();
+            long jbiewerFinalBalance = accRepository.get("jbiewer@wisc.edu").getBalance();
+
+            assertEquals(txn.getAmount(), user1InitialBalance - user1FinalBalance);
+            assertEquals(txn.getAmount(), jbiewerFinalBalance - jbiewerInitialBalance);
+            assertNotNull(getFromFirestore("Transactions", txn.getId(), Transaction.class));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * The processPeerTxn() method succeeds transferring from a merchant's bank account to a customer's
+     * account.
+     */
+    @Test
+    public void processPeerTxnSucceedsMerchantToCustomer() {
         // User2 sends $10 to User1
         Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
         txn.setTransactorEmail("user2@email.com");
@@ -175,14 +203,10 @@ public class TransactionRepositoryTest {
 
         try {
             long user1InitialBalance = accRepository.get("user1@email.com").getBalance();
-            long user2InitialBalance = accRepository.get("user2@email.com").getBalance();
             txnRepository.processPeerTxn(txn);
-
-            long user2FinalBalance = accRepository.get("user2@email.com").getBalance();
             long user1FinalBalance = accRepository.get("user1@email.com").getBalance();
 
             assertEquals(txn.getAmount(), user1FinalBalance - user1InitialBalance);
-            assertEquals(txn.getAmount(), user2InitialBalance - user2FinalBalance);
             assertNotNull(getFromFirestore("Transactions", txn.getId(), Transaction.class));
         } catch (Exception e) {
             fail(e); 
@@ -280,6 +304,48 @@ public class TransactionRepositoryTest {
             fail("IllegalArgumentException not thrown when it should have.");
         } catch (IllegalArgumentException e) {
             assertEquals("Transaction amount exceeds transactor's account balance", e.getMessage());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * The processesPeerTxn() method fails since the recipient isn't a customer.
+     */
+    @Test
+    public void processPeerTxnFailsMerchantRecipient() {
+        // User2 sends $10 to their User1.
+        Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
+        txn.setTransactorEmail("user1@email.com");
+        txn.setRecipientEmail("user2@email.com");
+        txn.setAmount(1000L);
+
+        try {
+            txnRepository.processPeerTxn(txn);
+            fail("IllegalArgumentException not thrown when it should have.");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Recipient can only be a customer", e.getMessage());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    /**
+     * The processesPeerTxn() method fails since the transactor and the recipient are the same.
+     */
+    @Test
+    public void processPeerTxnFailsSameEmails() {
+        // User1 tries to send $1000 to themself.
+        Transaction txn = new Transaction(Transaction.TransactionType.PEER_TO_PEER);
+        txn.setTransactorEmail("user1@email.com");
+        txn.setRecipientEmail("user1@email.com");
+        txn.setAmount(10_000L);
+
+        try {
+            txnRepository.processPeerTxn(txn);
+            fail("IllegalArgumentException not thrown when it should have.");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Transactor and recipient emails must be different", e.getMessage());
         } catch (Exception e) {
             fail(e);
         }

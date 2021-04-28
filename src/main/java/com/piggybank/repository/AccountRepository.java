@@ -62,10 +62,10 @@ public class AccountRepository extends PBRepository {
         if (newAccount.getType() == AccountType.MERCHANT) {
             if (newAccount.getBankAccount() == null) { throw new IllegalArgumentException("Merchant account must have a bank account"); }
         }
+        if (newAccount.getUsername() == null) { throw new IllegalArgumentException("Must specify account username"); }
+        if (usernameExists(newAccount.getUsername())) { throw new IllegalArgumentException("Account with this username already exists"); }
         if (newAccount.getEmail() == null) { throw new IllegalArgumentException("Must specify account email"); }
         if (newAccount.getPassword() == null) { throw new IllegalArgumentException("Must specify account password"); }
-        if (usernameExists(newAccount.getUsername())) { throw new IllegalArgumentException("Account with this username already exists"); }
-        //create document where id = email
         getApiFuture(collection.document(newAccount.getEmail()).create(newAccount));
         return "Account created successfully!";
     }
@@ -191,7 +191,7 @@ public class AccountRepository extends PBRepository {
      * @throws Exception When an unexpected exception occurs.
      */
     @NonNull
-    public boolean usernameExists(String username) throws Exception {
+    public boolean usernameExists(@NonNull String username) throws Exception {
         ApiFuture<Boolean> futureTx = FirestoreClient.getFirestore().runTransaction(transaction -> {
             // Using a parallel stream, check if any document has the username specified.
             return StreamSupport.stream(collection.listDocuments().spliterator(), true)

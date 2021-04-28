@@ -19,6 +19,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static com.piggybank.model.Account.AccountType;
+
 /**
  * Interface for database interactions for transactions.
  */
@@ -82,16 +84,17 @@ public class TransactionRepository extends PBRepository {
                 if (transactor.getBalance() < bankTxn.getAmount()) {
                     throw new IllegalArgumentException("Transaction amount exceeds account balance");
                 }
-                System.out.println("tx amount: "+bankTxn.getAmount());
 
+                // Create a new transaction document and associate it with the transactor.
                 bankTxn.setId(UUID.randomUUID().toString());
 
-                // Add transaction ID to account's list and remove transaction amount from account's balance.
                 transactor.getTransactionIds().add(bankTxn.getId());
                 tx.update(document, new HashMap<>() {{
                     put("transactionIds", transactor.getTransactionIds());
                     put("balance", transactor.getBalance() - bankTxn.getAmount());
                 }});
+
+                // This is where we would add the balance to the bank account, but we can't do that :(
 
                 tx.create(collection.document(bankTxn.getId()), bankTxn);
                 return "Transaction successful!";
@@ -104,6 +107,7 @@ public class TransactionRepository extends PBRepository {
     /**
      * Processes a peer-to-peer transaction by taking the amount specified by the transaction object and negating it
      * from the account represented by the transactor email and adding to the account represented by the recipient email.
+     * The only two types of peer-to-peer transactions is customer to merchant and customer to customer.
      *
      * @param peerTxn Peer-to-peer transaction information.
      * @return Message indicating success.
@@ -121,44 +125,58 @@ public class TransactionRepository extends PBRepository {
         if (peerTxn.getAmount() == null) {
             throw new IllegalArgumentException("Amount not specified");
         }
+        if (peerTxn.getTransactorEmail().equals(peerTxn.getRecipientEmail())) {
+            throw new IllegalArgumentException("Transactor and recipient emails must be different");
+        }
 
         ApiFuture<String> futureTx = FirestoreClient.getFirestore().runTransaction(tx -> {
             DocumentReference transactorDoc = accountCollection.document(peerTxn.getTransactorEmail());
             DocumentReference recipientDoc = accountCollection.document(peerTxn.getRecipientEmail());
 
-            DocumentSnapshot transactorSnap = transactorDoc.get(FieldMask.of("balance", "transactionIds")).get();
-            DocumentSnapshot recipientSnap = recipientDoc.get(FieldMask.of("balance", "transactionIds")).get();
+            DocumentSnapshot transactorSnap = transactorDoc.get(FieldMask.of("type", "balance", "transactionIds")).get();
+            DocumentSnapshot recipientSnap = recipientDoc.get(FieldMask.of("type", "balance", "transactionIds")).get();
 
             Account transactor = transactorSnap.toObject(Account.class);
             Account recipient = recipientSnap.toObject(Account.class);
 
+            // Ensure documents exists.
             if (!transactorSnap.exists() || transactor == null) {
                 throw new IllegalArgumentException("Account associated with transactor doesn't exist");
             } else if (!recipientSnap.exists() || recipient == null) {
                 throw new IllegalArgumentException("Account associated with recipient doesn't exist");
-            } else {
-                // Transaction amount can't be more than current balance
-                if (transactor.getBalance() < peerTxn.getAmount()) {
-                    throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance");
-                }
+            }
 
-                peerTxn.setId(UUID.randomUUID().toString());
+            // Ensure transactor is a customer
+            if (recipient.getType() != AccountType.CUSTOMER) {
+                throw new IllegalArgumentException("Recipient can only be a customer");
+            }
 
-                // Update transaction ID lists and balances in both the transactor and recipient documents.
-                transactor.getTransactionIds().add(peerTxn.getId());
-                recipient.getTransactionIds().add(peerTxn.getId());
+            // Transaction amount can't be more than current balance
+            if (transactor.getBalance() < peerTxn.getAmount()) {
+                throw new IllegalArgumentException("Transaction amount exceeds transactor's account balance");
+            }
+
+            peerTxn.setId(UUID.randomUUID().toString());
+
+            // Update transaction ID lists and balances in both the transactor and recipient documents.
+            transactor.getTransactionIds().add(peerTxn.getId());
+            recipient.getTransactionIds().add(peerTxn.getId());
+            if (transactor.getType() == AccountType.CUSTOMER) {
                 tx.update(transactorDoc, new HashMap<>() {{
                     put("transactionIds", transactor.getTransactionIds());
                     put("balance", transactor.getBalance() - peerTxn.getAmount());
                 }});
-                tx.update(recipientDoc, new HashMap<>() {{
-                    put("transactionIds", recipient.getTransactionIds());
-                    put("balance", recipient.getBalance() + peerTxn.getAmount());
-                }});
-
-                tx.create(collection.document(peerTxn.getId()), peerTxn);
-                return "Transaction successful!";
+            } else {
+                // This is where we would transfer from merchant's bank account to the customer's balance.
+                // Can't legally do this yet. :(
             }
+            tx.update(recipientDoc, new HashMap<>() {{
+                put("transactionIds", recipient.getTransactionIds());
+                put("balance", recipient.getBalance() + peerTxn.getAmount());
+            }});
+
+            tx.create(collection.document(peerTxn.getId()), peerTxn);
+            return "Transaction successful!";
         });
 
         return getApiFuture(futureTx);
