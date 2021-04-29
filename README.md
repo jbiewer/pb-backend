@@ -65,7 +65,7 @@ The most recent code coverage report can be viewed from the browser by opening t
 
 As of the submission for our third iteration, the code coverage report appears as so:
 
-<img src="https://github.com/jbiewer/pb-backend/tree/main/src/test/resources/iter3-jacoco-report.png">
+<img src="https://github.com/jbiewer/pb-backend/blob/iteration_3/src/test/resources/iter3-jacoco-report.png">
 
 
 ### Session management
