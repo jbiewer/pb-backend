@@ -31,7 +31,8 @@ private key' (button on the bottom) and store it locally as `secret/pb-firebase-
 the build script will assign the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of that file.
 
 ##### If you DO NOT have access to the Firestore console:
-Retrieve a private key from one of the PiggyBank team members. Store the key locally as `secret/pb-firebase-pk.json`.
+Retrieve a private key from one of the PiggyBank team members. Store the key locally as `secret/pb-firebase-pk.json` 
+on the root level of the repo.
 When the application is executed, the build script will assign the `GOOGLE_APPLICATION_CREDENTIALS` environment variable
 to the path of that file as specified in the build script, `build.gradle`.
 
