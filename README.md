@@ -27,7 +27,7 @@ To run the testing suite, follow the **Testing** section on how to set up your e
 
 ##### If you DO have access to the Firestore console:
 In the Firebase console, go to the settings and click on the 'Service accounts' tab. You'll need to 'Generate a new
-private key' (button on the bottom) and store it locally as `secret/pb-firebase-pk.json`. When the application is executed,
+private key' (button on the bottom) and store it locally as `secret/pb-firebase-pk.json` in the root folder of the repo. When the application is executed,
 the build script will assign the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of that file.
 
 ##### If you DO NOT have access to the Firestore console:
